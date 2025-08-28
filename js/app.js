@@ -5,6 +5,39 @@ if (typeof pdfjsLib !== 'undefined') {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
 }
 
+// Function to check if user has PRO access
+function checkProAccess() {
+    // Get user email (in a real app, this would come from authentication)
+    const userEmail = localStorage.getItem('userEmail') || '';
+    
+    // Check if user is the admin
+    const adminEmail = localStorage.getItem('adminEmail');
+    if (userEmail === adminEmail) {
+        return true;
+    }
+    
+    // Check if the user is in the PRO users list
+    const proUsersList = localStorage.getItem('proUsersList');
+    if (proUsersList) {
+        const proUsers = JSON.parse(proUsersList);
+        const userRecord = proUsers.find(user => user.email === userEmail);
+        
+        if (userRecord) {
+            // Check if subscription is still valid
+            if (userRecord.expires === 'unlimited') {
+                return true;
+            } else {
+                const expiryDate = new Date(userRecord.expires);
+                const now = new Date();
+                return expiryDate > now;
+            }
+        }
+    }
+    
+    // Check if PRO was directly set in localStorage (for backward compatibility)
+    return localStorage.getItem('proUser') === 'true';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const scanForm = document.getElementById('scanForm');
@@ -12,11 +45,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const queryPromptInput = document.getElementById('queryPrompt');
     const scanButton = document.getElementById('scanButton');
     const resultsSection = document.getElementById('results');
-    const matchScoreElement = document.getElementById('matchScore');
     const matchDetailsElement = document.getElementById('matchDetails');
     const aiInsightsElement = document.getElementById('aiInsights');
     const queryResultElement = document.getElementById('queryResult');
     const saveResultBtn = document.getElementById('saveResultBtn');
+    
+    // Login Elements
+    const userLoginBtn = document.getElementById('userLoginBtn');
+    const loginBtnText = document.getElementById('loginBtnText');
+    const loginForm = document.getElementById('loginForm');
+    const loginEmail = document.getElementById('loginEmail');
+    const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+    const currentUserEmail = document.getElementById('currentUserEmail');
+    const adminNavItem = document.getElementById('adminNavItem');
+    const proStatusBadge = document.getElementById('proStatusBadge');
     
     // Global variables
     let currentScanData = null;
@@ -32,8 +74,8 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('lastScanDate', today);
     }
     
-    // Check if user is PRO (in a real app, this would be handled by server authentication)
-    const isPro = localStorage.getItem('proUser') === 'true';
+    // Check if user is PRO based on our access control
+    let isPro = checkProAccess();
     
     // Event Listeners
     if (scanForm) {
@@ -42,6 +84,126 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (saveResultBtn) {
         saveResultBtn.addEventListener('click', saveResult);
+    }
+    
+    // Login/logout event listeners
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+    
+    if (userLoginBtn) {
+        userLoginBtn.addEventListener('click', handleUserLoginClick);
+    }
+    
+    if (confirmLogoutBtn) {
+        confirmLogoutBtn.addEventListener('click', handleLogout);
+    }
+    
+    // Initialize user state
+    initUserState();
+    
+    // User login/logout functions
+    function initUserState() {
+        const userEmail = localStorage.getItem('userEmail');
+        const adminEmail = localStorage.getItem('adminEmail');
+        
+        if (userEmail) {
+            // User is logged in
+            if (loginBtnText) {
+                loginBtnText.textContent = 'Logout';
+            }
+            
+            // Check if user is admin
+            if (userEmail === adminEmail && adminNavItem) {
+                adminNavItem.style.display = 'block';
+            }
+            
+            // Check and display PRO status
+            if (proStatusBadge) {
+                isPro = checkProAccess();
+                proStatusBadge.style.display = isPro ? 'inline-block' : 'none';
+            }
+        } else {
+            // No user logged in
+            if (loginBtnText) {
+                loginBtnText.textContent = 'Login';
+            }
+            if (adminNavItem) {
+                adminNavItem.style.display = 'none';
+            }
+            if (proStatusBadge) {
+                proStatusBadge.style.display = 'none';
+            }
+        }
+    }
+    
+    function handleUserLoginClick() {
+        const userEmail = localStorage.getItem('userEmail');
+        
+        if (userEmail) {
+            // User is logged in, show logout modal
+            if (currentUserEmail) {
+                currentUserEmail.textContent = userEmail;
+            }
+            
+            const logoutModal = new bootstrap.Modal(document.getElementById('logoutModal'));
+            logoutModal.show();
+        } else {
+            // User is not logged in, login modal will be shown by data-bs-toggle
+        }
+    }
+    
+    function handleLogin(e) {
+        e.preventDefault();
+        
+        const email = loginEmail.value;
+        
+        if (email) {
+            // Store the email
+            localStorage.setItem('userEmail', email);
+            
+            // Check if this is the first login and set as admin
+            if (!localStorage.getItem('adminEmail')) {
+                localStorage.setItem('adminEmail', email);
+                // Also set PRO for admin
+                localStorage.setItem('proUser', 'true');
+            }
+            
+            // Hide modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            // Update user state
+            initUserState();
+            
+            // Update PRO status
+            isPro = checkProAccess();
+            
+            // Show welcome message
+            alert(`Welcome, ${email}!`);
+        }
+    }
+    
+    function handleLogout() {
+        // Remove user email
+        localStorage.removeItem('userEmail');
+        
+        // Hide modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('logoutModal'));
+        if (modal) {
+            modal.hide();
+        }
+        
+        // Update user state
+        initUserState();
+        
+        // Update PRO status
+        isPro = checkProAccess();
+        
+        // Show logged out message
+        alert('You have been logged out.');
     }
     
     // Handle scan form submission
@@ -312,21 +474,4 @@ document.addEventListener('DOMContentLoaded', function() {
         
         alert('Result saved to history!');
     }
-    
-    // Initialize PRO features check
-    function initProFeaturesCheck() {
-        // This is just for demo purposes
-        // In a real application, you would check user status from your server
-        const proStatusDisplay = document.getElementById('proStatusDisplay');
-        if (proStatusDisplay) {
-            if (isPro) {
-                proStatusDisplay.innerHTML = '<span class="badge bg-success">PRO</span>';
-            } else {
-                proStatusDisplay.innerHTML = '<span class="badge bg-secondary">FREE</span>';
-            }
-        }
-    }
-    
-    // Initialize
-    initProFeaturesCheck();
 });
