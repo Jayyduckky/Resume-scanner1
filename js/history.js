@@ -65,18 +65,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const date = new Date(item.timestamp);
                 const formattedDate = date.toLocaleString();
                 
-                // Truncate job description
-                let shortJobDesc = item.jobDescription.substring(0, 50);
-                if (item.jobDescription.length > 50) {
-                    shortJobDesc += '...';
-                }
-                
-                // Set score class based on match percentage
-                let scoreClass = 'bg-danger';
-                if (item.matchScore >= 80) {
-                    scoreClass = 'bg-success';
-                } else if (item.matchScore >= 60) {
-                    scoreClass = 'bg-warning';
+                // Truncate query if needed
+                let displayQuery = item.queryPrompt || 'No query';
+                if (displayQuery.length > 30) {
+                    displayQuery = displayQuery.substring(0, 30) + '...';
                 }
                 
                 // Create table row
@@ -84,10 +76,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <tr>
                         <td>${formattedDate}</td>
                         <td>${item.fileName}</td>
-                        <td>
-                            <span class="badge ${scoreClass}">${item.matchScore}%</span>
-                        </td>
-                        <td>${shortJobDesc}</td>
+                        <td>${item.candidateName}</td>
+                        <td>${displayQuery}</td>
                         <td>
                             <button class="btn btn-sm btn-primary view-details" data-index="${index}" data-bs-toggle="modal" data-bs-target="#historyDetailsModal">
                                 <i class="fas fa-eye"></i> View
@@ -118,13 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const date = new Date(item.timestamp);
         const formattedDate = date.toLocaleString();
         
-        // Set score class based on match percentage
-        let scoreClass = 'bg-danger';
-        if (item.matchScore >= 80) {
-            scoreClass = 'bg-success';
-        } else if (item.matchScore >= 60) {
-            scoreClass = 'bg-warning';
-        }
+        // Handle display formatting
         
         // Generate skills HTML
         let matchingSkillsHTML = '';
@@ -132,10 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
             matchingSkillsHTML += `<span class="badge badge-match m-1 p-2">${skill}</span>`;
         });
         
-        let missingSkillsHTML = '';
-        item.missingSkills.forEach(skill => {
-            missingSkillsHTML += `<span class="badge badge-missing m-1 p-2">${skill}</span>`;
-        });
+        // We're no longer using missing skills
         
         // Generate insights HTML
         let insightsHTML = '';
@@ -172,8 +153,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span>${formattedDate}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Match Score
-                            <span class="badge ${scoreClass}">${item.matchScore}%</span>
+                            Email
+                            <span>${item.candidateEmail}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Phone
+                            <span>${item.candidatePhone}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             Candidate
@@ -182,26 +167,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     </ul>
                 </div>
                 <div class="col-md-6">
-                    <h5>Job Description</h5>
+                    <h5>Query</h5>
                     <div class="p-3 bg-light rounded">
                         <div style="max-height: 200px; overflow-y: auto;">
-                            ${item.jobDescription}
+                            ${item.queryPrompt}
                         </div>
                     </div>
                 </div>
             </div>
             
             <div class="row">
-                <div class="col-md-6">
-                    <h5>Matching Skills</h5>
+                <div class="col-md-12">
+                    <h5>Skills Found</h5>
                     <div class="d-flex flex-wrap mb-3">
-                        ${matchingSkillsHTML || '<span class="text-muted">No matching skills found</span>'}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <h5>Missing Skills</h5>
-                    <div class="d-flex flex-wrap">
-                        ${missingSkillsHTML || '<span class="text-muted">No missing skills identified</span>'}
+                        ${matchingSkillsHTML || '<span class="text-muted">No skills found in resume</span>'}
                     </div>
                 </div>
             </div>

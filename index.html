@@ -65,13 +65,9 @@
                                 </div>
                                 
                                 <div class="mb-3">
-                                    <label for="jobDescription" class="form-label">Job Description</label>
-                                    <textarea class="form-control" id="jobDescription" rows="5" placeholder="Paste job description here..."></textarea>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="queryPrompt" class="form-label">Query Prompt (Optional)</label>
-                                    <input type="text" class="form-control" id="queryPrompt" placeholder="E.g. 'What is the candidate's name?' or 'List all skills'">
+                                    <label for="queryPrompt" class="form-label">Query Prompt</label>
+                                    <input type="text" class="form-control" id="queryPrompt" placeholder="E.g. 'What is the candidate's name?' or 'List all skills'" required>
+                                    <div class="form-text">Ask specific questions about the resume like "What's their name?", "What skills do they have?", etc.</div>
                                 </div>
                                 
                                 <button type="submit" class="btn btn-primary" id="scanButton">
@@ -89,46 +85,42 @@
     <!-- Results Section -->
     <section id="results" class="py-5 bg-light" style="display: none;">
         <div class="container">
-            <h2 class="text-center mb-4">Analysis Results</h2>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card mb-4 h-100">
-                        <div class="card-header bg-primary text-white">
-                            <h4 class="mb-0">Match Score</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="text-center mb-3">
-                                <div class="progress" style="height: 30px;">
-                                    <div id="matchScore" class="progress-bar bg-success" role="progressbar" style="width: 0%;">0%</div>
-                                </div>
-                            </div>
-                            <div id="matchDetails">
-                                <!-- Match details will be populated by JavaScript -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card mb-4 h-100">
-                        <div class="card-header bg-primary text-white">
-                            <h4 class="mb-0">AI Insights</h4>
-                        </div>
-                        <div class="card-body">
-                            <div id="aiInsights">
-                                <!-- AI insights will be populated by JavaScript -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <h2 class="text-center mb-4">Resume Analysis Results</h2>
             
-            <div class="card mt-4">
+            <div class="card mt-4 mb-4">
                 <div class="card-header bg-primary text-white">
                     <h4 class="mb-0">Query Result</h4>
                 </div>
                 <div class="card-body">
                     <div id="queryResult">
                         <!-- Query results will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4 h-100">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">Skills Detected</h4>
+                        </div>
+                        <div class="card-body">
+                            <div id="matchDetails">
+                                <!-- Skills will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-4 h-100">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">Resume Insights</h4>
+                        </div>
+                        <div class="card-body">
+                            <div id="aiInsights">
+                                <!-- AI insights will be populated by JavaScript -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

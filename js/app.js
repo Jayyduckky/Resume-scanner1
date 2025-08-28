@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const scanForm = document.getElementById('scanForm');
     const resumeFileInput = document.getElementById('resumeFile');
-    const jobDescriptionInput = document.getElementById('jobDescription');
     const queryPromptInput = document.getElementById('queryPrompt');
     const scanButton = document.getElementById('scanButton');
     const resultsSection = document.getElementById('results');
@@ -50,8 +49,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        if (!jobDescriptionInput.value.trim()) {
-            alert('Please enter a job description');
+        if (!queryPromptInput.value.trim()) {
+            alert('Please enter a query prompt');
             return;
         }
         
@@ -65,15 +64,15 @@ document.addEventListener('DOMContentLoaded', function() {
         scanButton.disabled = true;
         scanButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Scanning...';
         
-        // In a real application, you would upload the file and send the job description to your backend
+        // In a real application, you would upload the file and send the query to your backend
         // For this demo, we'll simulate the API call with a timeout
         setTimeout(() => {
-            processResume(resumeFileInput.files[0], jobDescriptionInput.value, queryPromptInput.value);
+            processResume(resumeFileInput.files[0], queryPromptInput.value);
         }, 2000);
     }
     
-    // Process resume and job description
-    function processResume(resumeFile, jobDescription, queryPrompt) {
+    // Process resume with query
+    function processResume(resumeFile, queryPrompt) {
         // Increment scan count for free users
         if (!isPro) {
             scanCount++;
@@ -96,7 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // which would then call the OpenAI API
                 const aiAnalysisResult = await window.AIService.analyzeResume(
                     resumeText, 
-                    jobDescription,
                     queryPrompt
                 );
                 
@@ -105,7 +103,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     fileName: fileName,
                     fileSize: fileSize,
                     timestamp: new Date().toISOString(),
-                    jobDescription: jobDescription,
                     queryPrompt: queryPrompt,
                     ...aiAnalysisResult // Spread the AI analysis results
                 };
@@ -141,29 +138,17 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsSection.style.display = 'block';
         resultsSection.scrollIntoView({ behavior: 'smooth' });
         
-        // Update match score
-        matchScoreElement.style.width = `${data.matchScore}%`;
-        matchScoreElement.textContent = `${data.matchScore}%`;
+        // Display skills
+        let matchDetailsHTML = '<h5>Skills Found in Resume</h5><div class="d-flex flex-wrap mb-3">';
         
-        // Update match color based on score
-        if (data.matchScore >= 80) {
-            matchScoreElement.className = 'progress-bar bg-success';
-        } else if (data.matchScore >= 60) {
-            matchScoreElement.className = 'progress-bar bg-warning';
+        if (data.matchingSkills && data.matchingSkills.length > 0) {
+            data.matchingSkills.forEach(skill => {
+                matchDetailsHTML += `<span class="badge badge-match m-1 p-2">${skill}</span>`;
+            });
         } else {
-            matchScoreElement.className = 'progress-bar bg-danger';
+            matchDetailsHTML += '<p class="text-muted">No specific skills were detected in this resume.</p>';
         }
         
-        // Display matching and missing skills
-        let matchDetailsHTML = '<h5>Matching Skills</h5><div class="d-flex flex-wrap mb-3">';
-        data.matchingSkills.forEach(skill => {
-            matchDetailsHTML += `<span class="badge badge-match m-1 p-2">${skill}</span>`;
-        });
-        
-        matchDetailsHTML += '</div><h5>Missing Skills</h5><div class="d-flex flex-wrap">';
-        data.missingSkills.forEach(skill => {
-            matchDetailsHTML += `<span class="badge badge-missing m-1 p-2">${skill}</span>`;
-        });
         matchDetailsHTML += '</div>';
         
         matchDetailsElement.innerHTML = matchDetailsHTML;
