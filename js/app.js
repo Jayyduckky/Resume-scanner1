@@ -1,5 +1,10 @@
 // ResumeAI Scanner Application
 
+// Set up PDF.js worker
+if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const scanForm = document.getElementById('scanForm');
@@ -80,19 +85,131 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('lastScanDate', today);
         }
         
-        // Read the resume file
+        const fileName = resumeFile.name;
+        const fileSize = resumeFile.size;
+        const fileType = resumeFile.type;
+        
+        // Show loading state
+        scanButton.disabled = true;
+        scanButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Scanning...';
+        
+        // Check if it's a PDF file
+        if (fileType === 'application/pdf') {
+            processPDFFile(resumeFile, fileName, fileSize, queryPrompt);
+        } else {
+            // Process as text file
+            processTextFile(resumeFile, fileName, fileSize, queryPrompt);
+        }
+    }
+    
+    // Process PDF file
+    function processPDFFile(file, fileName, fileSize, queryPrompt) {
         const reader = new FileReader();
         
         reader.onload = async function(e) {
-            // Get resume text content
-            const resumeText = e.target.result;
-            const fileName = resumeFile.name;
-            const fileSize = resumeFile.size;
-            
             try {
+                // Initialize PDF.js
+                const typedArray = new Uint8Array(e.target.result);
+                const loadingTask = pdfjsLib.getDocument({ data: typedArray });
+                
+                loadingTask.promise.then(async function(pdf) {
+                    let fullText = '';
+                    
+                    // Extract text from all pages
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        const pageText = textContent.items.map(item => item.str).join(' ');
+                        fullText += pageText + ' ';
+                    }
+                    
+                    try {
+                        // Call the AI service to analyze the resume
+                        const aiAnalysisResult = await window.AIService.analyzeResume(
+                            fullText,
+                            queryPrompt
+                        );
+                        
+                        // Create the complete result object
+                        const resultData = {
+                            fileName: fileName,
+                            fileSize: fileSize,
+                            timestamp: new Date().toISOString(),
+                            queryPrompt: queryPrompt,
+                            ...aiAnalysisResult // Spread the AI analysis results
+                        };
+                        
+                        // Store current scan data
+                        currentScanData = resultData;
+                        
+                        // Display results
+                        displayResults(resultData);
+                    } catch (error) {
+                        console.error('Error analyzing resume:', error);
+                        alert('There was an error analyzing your resume. Please try again.');
+                    } finally {
+                        // Reset form state
+                        scanButton.disabled = false;
+                        scanButton.innerHTML = '<i class="fas fa-search me-1"></i> Scan Resume';
+                    }
+                }).catch(function(error) {
+                    console.error('Error parsing PDF:', error);
+                    
+                    // Show detailed error in results section for better debugging
+                    const errorResult = {
+                        fileName: fileName,
+                        fileSize: fileSize,
+                        timestamp: new Date().toISOString(),
+                        queryPrompt: queryPrompt,
+                        matchScore: 0,
+                        matchingSkills: [],
+                        missingSkills: [],
+                        candidateName: "Error Processing PDF",
+                        candidateEmail: "Unknown",
+                        candidatePhone: "Unknown",
+                        yearsOfExperience: 0,
+                        queryResponse: `There was an error parsing your PDF file: ${error.message || 'Unknown error'}. Please ensure it's a valid PDF that isn't password-protected.`,
+                        insights: ["PDF parsing error. Try a different file format or check if the PDF is corrupted."]
+                    };
+                    
+                    // Store and display the error result
+                    currentScanData = errorResult;
+                    displayResults(errorResult);
+                    
+                    // Reset form state
+                    scanButton.disabled = false;
+                    scanButton.innerHTML = '<i class="fas fa-search me-1"></i> Scan Resume';
+                });
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                alert('Error loading the PDF file. Please try again.');
+                
+                // Reset form state
+                scanButton.disabled = false;
+                scanButton.innerHTML = '<i class="fas fa-search me-1"></i> Scan Resume';
+            }
+        };
+        
+        reader.onerror = function() {
+            alert('Error reading the file. Please try again.');
+            scanButton.disabled = false;
+            scanButton.innerHTML = '<i class="fas fa-search me-1"></i> Scan Resume';
+        };
+        
+        // Read the file as an array buffer (for binary data like PDFs)
+        reader.readAsArrayBuffer(file);
+    }
+    
+    // Process text file (DOCX, TXT, etc)
+    function processTextFile(file, fileName, fileSize, queryPrompt) {
+        const reader = new FileReader();
+        
+        reader.onload = async function(e) {
+            try {
+                // Get resume text content
+                const resumeText = e.target.result;
+                
                 // Call the AI service to analyze the resume
-                // In a production app, this would send the data to your backend
-                // which would then call the OpenAI API
                 const aiAnalysisResult = await window.AIService.analyzeResume(
                     resumeText, 
                     queryPrompt
@@ -113,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Display results
                 displayResults(resultData);
             } catch (error) {
-                console.error('Error processing resume:', error);
+                console.error('Error processing text file:', error);
                 alert('There was an error processing your resume. Please try again.');
             } finally {
                 // Reset form state
@@ -123,13 +240,13 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         reader.onerror = function() {
-            alert('Error reading the resume file. Please try again.');
+            alert('Error reading the file. Please try again.');
             scanButton.disabled = false;
             scanButton.innerHTML = '<i class="fas fa-search me-1"></i> Scan Resume';
         };
         
-        // Start reading the file as text
-        reader.readAsText(resumeFile);
+        // Read as text for non-PDF files
+        reader.readAsText(file);
     }
     
     // Display results on the page

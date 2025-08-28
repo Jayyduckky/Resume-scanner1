@@ -86,30 +86,95 @@ const AIService = {
         
         // Extract candidate name (typically at the top of the resume)
         let candidateName = "Unknown";
-        for (let i = 0; i < Math.min(10, lines.length); i++) {
+        
+        // First try to find lines that contain only a name (typically at the very top of resume)
+        for (let i = 0; i < Math.min(15, lines.length); i++) {
             const line = lines[i].trim();
-            // Look for a name-like pattern (2-3 words, each starting with uppercase)
-            if (/^[A-Z][a-z]+([ \-][A-Z][a-z]+){1,2}$/.test(line) && line.length < 30) {
+            
+            // Skip empty lines and very short lines
+            if (line.length < 3) continue;
+            
+            // Look for name patterns - more flexible to catch more name formats
+            
+            // Pattern 1: Standard 2-3 word name (First Middle? Last)
+            if (/^[A-Z][a-zA-Z\.]+([ \-][A-Z][a-zA-Z\.]+){1,2}$/.test(line) && line.length < 40 && !line.includes('@')) {
                 candidateName = line;
                 break;
+            }
+            
+            // Pattern 2: Name followed by credentials (John Smith, MBA)
+            const credentialsPattern = /^([A-Z][a-zA-Z\.]+([ \-][A-Z][a-zA-Z\.]+){1,2}),.*$/;
+            const credentialsMatch = line.match(credentialsPattern);
+            if (credentialsMatch && credentialsMatch[1] && credentialsMatch[1].length < 40) {
+                candidateName = credentialsMatch[1];
+                break;
+            }
+            
+            // Pattern 3: ALL CAPS name
+            if (/^[A-Z]+(?:[ \-][A-Z]+){1,3}$/.test(line) && line.length < 40) {
+                candidateName = line.split(' ').map(word => 
+                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                ).join(' ');
+                break;
+            }
+        }
+        
+        // If no name found in isolated lines, try looking in blocks of text
+        if (candidateName === "Unknown") {
+            const resumeText = lines.join(' ');
+            const namePatterns = [
+                /(?:^|[^a-zA-Z])(?:name is|I am|I'm) ([A-Z][a-zA-Z]+(?: [A-Z][a-zA-Z]+){1,2})(?:[^a-zA-Z]|$)/,
+                /^([A-Z][a-zA-Z]+(?: [A-Z][a-zA-Z]+){1,2})(?:\s*[\|\-•]|$)/
+            ];
+            
+            for (const pattern of namePatterns) {
+                const match = resumeText.match(pattern);
+                if (match && match[1] && match[1].length < 40) {
+                    candidateName = match[1];
+                    break;
+                }
             }
         }
         
         // Extract email (look for email pattern)
         let candidateEmail = "Unknown";
         const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
-        const emailMatch = resumeText.match(emailRegex);
-        if (emailMatch) {
-            candidateEmail = emailMatch[0];
+        const emailMatches = resumeText.match(emailRegex);
+        if (emailMatches) {
+            // Use the first email found
+            candidateEmail = emailMatches[0];
+            
+            // Log all found emails for debugging
+            console.log('Found emails:', emailMatches);
         }
         
-        // Extract phone number
+        // Extract phone number - support multiple formats
         let candidatePhone = "Unknown";
-        const phoneRegex = /(\+\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/;
-        const phoneMatch = resumeText.match(phoneRegex);
-        if (phoneMatch) {
-            candidatePhone = phoneMatch[0];
+        const phoneRegexes = [
+            // Standard US format with various separators
+            /(\+\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/,
+            // Format with country code
+            /\+\d{1,2}[\s.-]?\d{3}[\s.-]?\d{3}[\s.-]?\d{4}/,
+            // Simple 10-digit number
+            /\b\d{10}\b/
+        ];
+        
+        for (const regex of phoneRegexes) {
+            const phoneMatch = resumeText.match(regex);
+            if (phoneMatch) {
+                candidatePhone = phoneMatch[0];
+                
+                // Format phone number for readability if it's a simple 10 digits
+                if (/^\d{10}$/.test(candidatePhone)) {
+                    candidatePhone = candidatePhone.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+                }
+                
+                break;
+            }
         }
+        
+        // Log raw text for debugging purposes
+        console.log('Resume text sample (first 200 chars):', resumeText.substring(0, 200));
         
         // Extract skills
         const commonSkills = [
@@ -156,19 +221,45 @@ const AIService = {
         
         // Generate query response
         let queryResponse = '';
-        if (queryPrompt.toLowerCase().includes('name')) {
-            queryResponse = `The candidate's name is <span class="query-highlight">${candidateName}</span>.`;
-        } else if (queryPrompt.toLowerCase().includes('email')) {
-            queryResponse = `The candidate's email is <span class="query-highlight">${candidateEmail}</span>.`;
-        } else if (queryPrompt.toLowerCase().includes('phone')) {
-            queryResponse = `The candidate's phone number is <span class="query-highlight">${candidatePhone}</span>.`;
-        } else if (queryPrompt.toLowerCase().includes('experience')) {
-            queryResponse = `The candidate has approximately <span class="query-highlight">${yearsOfExperience} years</span> of professional experience.`;
-        } else if (queryPrompt.toLowerCase().includes('skill')) {
-            queryResponse = `The candidate's key skills include <span class="query-highlight">${matchingSkills.slice(0, 7).join(', ')}</span>.`;
+        const queryLower = queryPrompt.toLowerCase();
+        
+        if (queryLower.includes('name')) {
+            if (candidateName !== "Unknown") {
+                queryResponse = `The candidate's name is <span class="query-highlight">${candidateName}</span>.`;
+            } else {
+                queryResponse = `I couldn't find a name in this resume. The document may be formatted unusually or the name might not be clearly identified.`;
+            }
+        } else if (queryLower.includes('email')) {
+            if (candidateEmail !== "Unknown") {
+                queryResponse = `The candidate's email is <span class="query-highlight">${candidateEmail}</span>.`;
+            } else {
+                queryResponse = `I couldn't find an email address in this resume. Please check if the resume includes contact information.`;
+            }
+        } else if (queryLower.includes('phone') || queryLower.includes('number') || queryLower.includes('contact')) {
+            if (candidatePhone !== "Unknown") {
+                queryResponse = `The candidate's phone number is <span class="query-highlight">${candidatePhone}</span>.`;
+            } else {
+                queryResponse = `I couldn't find a phone number in this resume. Please check if the resume includes contact information.`;
+            }
+        } else if (queryLower.includes('experience')) {
+            if (yearsOfExperience > 0) {
+                queryResponse = `The candidate has approximately <span class="query-highlight">${yearsOfExperience} years</span> of professional experience.`;
+            } else {
+                queryResponse = `I couldn't accurately determine the years of experience from this resume. The work history might not include clear date ranges.`;
+            }
+        } else if (queryLower.includes('skill')) {
+            if (matchingSkills.length > 0) {
+                queryResponse = `The candidate's key skills include <span class="query-highlight">${matchingSkills.slice(0, 7).join(', ')}</span>.`;
+            } else {
+                queryResponse = `I couldn't identify specific skills in this resume. Try uploading a resume that lists skills more explicitly.`;
+            }
         } else {
-            // For other queries, we'd use the AI response
-            queryResponse = `Based on the resume, ${queryPrompt} appears to be related to ${candidateName}'s background. For more specific information, please try asking about their name, email, phone, experience, or skills.`;
+            // For other queries, provide a helpful response
+            if (candidateName !== "Unknown") {
+                queryResponse = `Based on the resume, your query about "${queryPrompt}" might be related to ${candidateName}'s background, but I don't have enough information to provide a specific answer. Try asking about their name, email, phone, experience, or skills.`;
+            } else {
+                queryResponse = `I couldn't extract enough information from this resume to answer your specific query. For best results, try asking simple questions like "What's their name?", "What's their email?", or "What skills do they have?".`;
+            }
         }
         
         // Generate insights
