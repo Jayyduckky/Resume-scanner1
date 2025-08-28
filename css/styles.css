@@ -1,0 +1,203 @@
+/* Main Styles for ResumeAI Scanner */
+
+/* Custom Variables */
+:root {
+    --primary-color: #4361ee;
+    --secondary-color: #3f37c9;
+    --accent-color: #4cc9f0;
+    --dark-color: #212529;
+    --light-color: #f8f9fa;
+    --success-color: #4caf50;
+    --warning-color: #ff9800;
+    --danger-color: #f44336;
+}
+
+/* General Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+}
+
+.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+/* Hero Section */
+.hero {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+/* Feature Icons */
+.feature-icon {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 70px;
+    height: 70px;
+    font-size: 28px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+}
+
+/* Scanner Form */
+.card {
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.card-header {
+    font-weight: 600;
+    border-bottom: none;
+}
+
+/* Results Section */
+.progress {
+    border-radius: 50px;
+    overflow: hidden;
+}
+
+/* Match Details */
+.match-item {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.match-item:last-child {
+    border-bottom: none;
+}
+
+.badge-match {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.badge-missing {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+/* AI Insights */
+.insight-item {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed #eee;
+}
+
+.insight-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* Query Results */
+.query-highlight {
+    background-color: rgba(67, 97, 238, 0.1);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+/* History Table */
+.history-table th, 
+.history-table td {
+    vertical-align: middle;
+}
+
+/* Pricing Cards */
+.pricing-card {
+    transition: transform 0.3s ease;
+}
+
+.pricing-card:hover {
+    transform: translateY(-10px);
+}
+
+.pricing-header {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.pricing-price {
+    font-size: 3rem;
+    font-weight: 700;
+}
+
+.pricing-currency {
+    font-size: 1.5rem;
+    position: relative;
+    top: -15px;
+}
+
+.pricing-period {
+    font-size: 1rem;
+    color: #6c757d;
+}
+
+.feature-list li {
+    padding: 10px 0;
+}
+
+.feature-available {
+    color: var(--success-color);
+}
+
+.feature-unavailable {
+    color: #ccc;
+}
+
+/* Testimonials */
+.testimonial-card {
+    padding: 25px;
+    border-radius: 10px;
+    background-color: white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.testimonial-text {
+    position: relative;
+    font-style: italic;
+}
+
+.testimonial-text:before {
+    content: '"';
+    font-family: Georgia, serif;
+    font-size: 4rem;
+    position: absolute;
+    left: -20px;
+    top: -20px;
+    color: rgba(67, 97, 238, 0.1);
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .hero {
+        padding: 60px 0;
+        text-align: center;
+    }
+    
+    .hero img {
+        margin-top: 30px;
+    }
+}
