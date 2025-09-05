@@ -35,6 +35,13 @@ function checkProAccess() {
     }
     
     // Check if PRO was directly set in localStorage (for backward compatibility)
+    // For the site owner, automatically grant PRO access
+    const siteOwner = localStorage.getItem('adminEmail');
+    const currentUser = localStorage.getItem('userEmail');
+    if (siteOwner && currentUser && siteOwner === currentUser) {
+        return true;
+    }
+    
     return localStorage.getItem('proUser') === 'true';
 }
 
@@ -270,6 +277,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         reader.onload = async function(e) {
             try {
+                // Check if PDF.js is available
+                if (typeof pdfjsLib === 'undefined') {
+                    throw new Error('PDF.js library not loaded. Please check your internet connection.');
+                }
+                
                 // Initialize PDF.js
                 const typedArray = new Uint8Array(e.target.result);
                 const loadingTask = pdfjsLib.getDocument({ data: typedArray });

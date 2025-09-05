@@ -47,14 +47,32 @@ document.addEventListener('DOMContentLoaded', function() {
             // Set default password
             localStorage.setItem(ADMIN_PASSWORD_KEY, DEFAULT_PASSWORD);
             
-            // Set admin as PRO
+            // Set admin as PRO (ensuring site owner always has access)
             localStorage.setItem('proUser', 'true');
             
-            // Create empty pro users list
-            localStorage.setItem(PRO_USERS_KEY, JSON.stringify([]));
+            // Add admin to PRO users list with unlimited access
+            const adminEmail = localStorage.getItem('adminEmail');
+            if (adminEmail) {
+                const adminProUser = {
+                    email: adminEmail,
+                    addedOn: new Date().toISOString(),
+                    expires: 'unlimited'
+                };
+                const proUsers = getProUsers();
+                if (!proUsers.find(u => u.email === adminEmail)) {
+                    proUsers.push(adminProUser);
+                    localStorage.setItem(PRO_USERS_KEY, JSON.stringify(proUsers));
+                }
+            }
+            
+            // Only create empty pro users list if it doesn't exist
+            if (!localStorage.getItem(PRO_USERS_KEY)) {
+                localStorage.setItem(PRO_USERS_KEY, JSON.stringify([]));
+            }
             
             // Check if there's a saved email to set as admin
-            const adminEmail = localStorage.getItem(ADMIN_EMAIL_KEY);
+            // Get admin email (using the variable we already initialized above)
+            // const adminEmail = localStorage.getItem(ADMIN_EMAIL_KEY);
             if (!adminEmail) {
                 // Save the current session as admin
                 localStorage.setItem(ADMIN_EMAIL_KEY, 'admin@example.com');

@@ -9,11 +9,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const paymentSuccess = document.getElementById('paymentSuccess');
     const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
     
+    // Login Elements
+    const userLoginBtn = document.getElementById('userLoginBtn');
+    const loginBtnText = document.getElementById('loginBtnText');
+    const adminNavItem = document.getElementById('adminNavItem');
+    const proStatusBadge = document.getElementById('proStatusBadge');
+    
     // Track subscription type
     let selectedPlan = '';
     
     // Check if user is already PRO
-    const isPro = localStorage.getItem('proUser') === 'true';
+    const isPro = checkProAccess();
+    
+    // Initialize user state
+    initUserState();
     
     // Update buttons if user is already PRO
     if (isPro) {
@@ -47,9 +56,98 @@ document.addEventListener('DOMContentLoaded', function() {
         confirmPaymentBtn.addEventListener('click', processPayment);
     }
     
+    if (userLoginBtn) {
+        userLoginBtn.addEventListener('click', handleUserLoginClick);
+    }
+    
     // Functions
+    function initUserState() {
+        const userEmail = localStorage.getItem('userEmail');
+        const adminEmail = localStorage.getItem('adminEmail');
+        
+        if (userEmail) {
+            // User is logged in
+            if (loginBtnText) {
+                loginBtnText.textContent = 'Logout';
+            }
+            
+            // Check if user is admin
+            if (userEmail === adminEmail && adminNavItem) {
+                adminNavItem.style.display = 'block';
+            }
+            
+            // Check and display PRO status
+            if (proStatusBadge) {
+                proStatusBadge.style.display = isPro ? 'inline-block' : 'none';
+            }
+        } else {
+            // No user logged in
+            if (loginBtnText) {
+                loginBtnText.textContent = 'Login';
+            }
+            if (adminNavItem) {
+                adminNavItem.style.display = 'none';
+            }
+            if (proStatusBadge) {
+                proStatusBadge.style.display = 'none';
+            }
+        }
+    }
+    
+    function handleUserLoginClick() {
+        window.location.href = 'index.html'; // Redirect to index page for login
+    }
+    
+    // Check if user has PRO access
+    function checkProAccess() {
+        // Get user email
+        const userEmail = localStorage.getItem('userEmail') || '';
+        
+        // Check if user is the admin
+        const adminEmail = localStorage.getItem('adminEmail');
+        if (userEmail === adminEmail) {
+            return true;
+        }
+        
+        // Check if the user is in the PRO users list
+        const proUsersList = localStorage.getItem('proUsersList');
+        if (proUsersList) {
+            const proUsers = JSON.parse(proUsersList);
+            const userRecord = proUsers.find(user => user.email === userEmail);
+            
+            if (userRecord) {
+                // Check if subscription is still valid
+                if (userRecord.expires === 'unlimited') {
+                    return true;
+                } else {
+                    const expiryDate = new Date(userRecord.expires);
+                    const now = new Date();
+                    return expiryDate > now;
+                }
+            }
+        }
+        
+        // For the site owner, automatically grant PRO access
+        const siteOwner = localStorage.getItem('adminEmail');
+        const currentUser = localStorage.getItem('userEmail');
+        if (siteOwner && currentUser && siteOwner === currentUser) {
+            return true;
+        }
+        
+        // Check if PRO was directly set in localStorage (for backward compatibility)
+        return localStorage.getItem('proUser') === 'true';
+    }
+    
     function showPaymentModal(title, price) {
         if (!paymentModal) return;
+        
+        // Check if user is logged in first
+        const userEmail = localStorage.getItem('userEmail');
+        if (!userEmail) {
+            alert('Please login first before subscribing to PRO!');
+            window.location.href = 'index.html'; // Redirect to home page for login
+            return;
+        }
         
         // Set modal title to show plan details
         const modalTitle = document.getElementById('paymentModalLabel');
@@ -75,34 +173,67 @@ document.addEventListener('DOMContentLoaded', function() {
         const cardExpiry = document.getElementById('cardExpiry');
         const cardCVC = document.getElementById('cardCVC');
         
-        if (cardName && cardName.value.trim() === '') {
-            alert('Please enter the name on the card');
-            return;
+        // Check if we're using credit card
+        const creditCardRadio = document.getElementById('creditCard');
+        const isUsingCreditCard = creditCardRadio && creditCardRadio.checked;
+        
+        if (isUsingCreditCard) {
+            // Validate credit card details
+            if (cardName && cardName.value.trim() === '') {
+                alert('Please enter the name on the card');
+                return;
+            }
+            
+            if (cardNumber && cardNumber.value.trim() === '') {
+                alert('Please enter the card number');
+                return;
+            }
+            
+            if (cardExpiry && cardExpiry.value.trim() === '') {
+                alert('Please enter the expiry date');
+                return;
+            }
+            
+            if (cardCVC && cardCVC.value.trim() === '') {
+                alert('Please enter the CVC');
+                return;
+            }
         }
         
-        if (cardNumber && cardNumber.value.trim() === '') {
-            alert('Please enter the card number');
+        // Get current user email
+        const userEmail = localStorage.getItem('userEmail');
+        if (!userEmail) {
+            alert('Please login first before subscribing.');
             return;
         }
-        
-        if (cardExpiry && cardExpiry.value.trim() === '') {
-            alert('Please enter the expiry date');
-            return;
-        }
-        
-        if (cardCVC && cardCVC.value.trim() === '') {
-            alert('Please enter the CVC');
-            return;
-        }
-        
-        // In a real app, this would call a payment processing API
-        // For the demo, we'll just simulate a successful payment
         
         // Show loading state
         if (confirmPaymentBtn) {
             confirmPaymentBtn.disabled = true;
             confirmPaymentBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
         }
+        
+        // Calculate expiry date
+        let expiryDate = 'unlimited';
+        if (selectedPlan === 'monthly') {
+            const date = new Date();
+            date.setMonth(date.getMonth() + 1);
+            expiryDate = date.toISOString();
+        } else if (selectedPlan === 'annual') {
+            const date = new Date();
+            date.setFullYear(date.getFullYear() + 1);
+            expiryDate = date.toISOString();
+        }
+        
+        // Create user record for PRO list
+        const proUser = {
+            email: userEmail,
+            addedOn: new Date().toISOString(),
+            expires: expiryDate
+        };
+        
+        // Add user to PRO list
+        addProUser(proUser);
         
         // Simulate API call delay
         setTimeout(() => {
@@ -147,27 +278,58 @@ document.addEventListener('DOMContentLoaded', function() {
                 subscribeMonthlyBtn.innerText = 'Downgrade';
             }
         }
+        
+        // Show PRO badge
+        if (proStatusBadge) {
+            proStatusBadge.style.display = 'inline-block';
+        }
     }
     
     // Payment Method Toggle
     const creditCardRadio = document.getElementById('creditCard');
     const paypalRadio = document.getElementById('paypal');
     const creditCardForm = document.getElementById('creditCardForm');
+    const paypalButtonContainer = document.getElementById('paypal-button-container');
     
-    if (creditCardRadio && paypalRadio && creditCardForm) {
+    if (creditCardRadio && paypalRadio && creditCardForm && paypalButtonContainer) {
         creditCardRadio.addEventListener('change', function() {
             if (this.checked) {
                 creditCardForm.style.display = 'block';
+                paypalButtonContainer.style.display = 'none';
             }
         });
         
         paypalRadio.addEventListener('change', function() {
             if (this.checked) {
                 creditCardForm.style.display = 'none';
+                paypalButtonContainer.style.display = 'block';
                 // For a real PayPal integration, you would use this code:
                 // initPayPalButton();
             }
         });
+    }
+    
+    // Add user to PRO users list
+    function addProUser(user) {
+        // Get existing PRO users list
+        let proUsers = [];
+        const existingList = localStorage.getItem('proUsersList');
+        if (existingList) {
+            proUsers = JSON.parse(existingList);
+        }
+        
+        // Check if user already exists
+        const index = proUsers.findIndex(u => u.email === user.email);
+        if (index !== -1) {
+            // Update existing user
+            proUsers[index] = user;
+        } else {
+            // Add new user
+            proUsers.push(user);
+        }
+        
+        // Save updated list
+        localStorage.setItem('proUsersList', JSON.stringify(proUsers));
     }
     
     // PayPal Button Integration

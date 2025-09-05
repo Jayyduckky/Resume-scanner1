@@ -8,21 +8,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const historyDetailsModal = document.getElementById('historyDetailsModal');
     const historyDetailsContent = document.getElementById('historyDetailsContent');
     
+    // Login Elements
+    const userLoginBtn = document.getElementById('userLoginBtn');
+    const loginBtnText = document.getElementById('loginBtnText');
+    const adminNavItem = document.getElementById('adminNavItem');
+    const proStatusBadge = document.getElementById('proStatusBadge');
+    
     // Load history data from local storage
     let scanHistory = JSON.parse(localStorage.getItem('scanHistory')) || [];
     
     // Check if user is PRO
-    const isPro = localStorage.getItem('proUser') === 'true';
+    const isPro = checkProAccess();
+    
+    // Initialize user state
+    initUserState();
     
     // Initialize PRO status display
-    const proStatusDisplay = document.getElementById('proStatusDisplay');
-    if (proStatusDisplay) {
-        if (isPro) {
-            proStatusDisplay.innerHTML = '<span class="badge bg-success">PRO</span>';
-        } else {
-            proStatusDisplay.innerHTML = '<span class="badge bg-secondary">FREE</span>';
-        }
-    }
+    updateProStatus();
     
     // Display history
     displayHistory();
@@ -32,7 +34,86 @@ document.addEventListener('DOMContentLoaded', function() {
         clearHistoryBtn.addEventListener('click', clearHistory);
     }
     
+    if (userLoginBtn) {
+        userLoginBtn.addEventListener('click', handleUserLoginClick);
+    }
+    
     // Functions
+    function initUserState() {
+        const userEmail = localStorage.getItem('userEmail');
+        const adminEmail = localStorage.getItem('adminEmail');
+        
+        if (userEmail) {
+            // User is logged in
+            if (loginBtnText) {
+                loginBtnText.textContent = 'Logout';
+            }
+            
+            // Check if user is admin
+            if (userEmail === adminEmail && adminNavItem) {
+                adminNavItem.style.display = 'block';
+            }
+        } else {
+            // No user logged in
+            if (loginBtnText) {
+                loginBtnText.textContent = 'Login';
+            }
+            if (adminNavItem) {
+                adminNavItem.style.display = 'none';
+            }
+        }
+    }
+    
+    function handleUserLoginClick() {
+        window.location.href = 'index.html'; // Redirect to index page for login
+    }
+    
+    function updateProStatus() {
+        if (proStatusBadge) {
+            proStatusBadge.style.display = isPro ? 'inline-block' : 'none';
+        }
+    }
+    
+    // Check if user has PRO access
+    function checkProAccess() {
+        // Get user email
+        const userEmail = localStorage.getItem('userEmail') || '';
+        
+        // Check if user is the admin
+        const adminEmail = localStorage.getItem('adminEmail');
+        if (userEmail === adminEmail) {
+            return true;
+        }
+        
+        // Check if the user is in the PRO users list
+        const proUsersList = localStorage.getItem('proUsersList');
+        if (proUsersList) {
+            const proUsers = JSON.parse(proUsersList);
+            const userRecord = proUsers.find(user => user.email === userEmail);
+            
+            if (userRecord) {
+                // Check if subscription is still valid
+                if (userRecord.expires === 'unlimited') {
+                    return true;
+                } else {
+                    const expiryDate = new Date(userRecord.expires);
+                    const now = new Date();
+                    return expiryDate > now;
+                }
+            }
+        }
+        
+        // For the site owner, automatically grant PRO access
+        const siteOwner = localStorage.getItem('adminEmail');
+        const currentUser = localStorage.getItem('userEmail');
+        if (siteOwner && currentUser && siteOwner === currentUser) {
+            return true;
+        }
+        
+        // Check if PRO was directly set in localStorage (for backward compatibility)
+        return localStorage.getItem('proUser') === 'true';
+    }
+    
     function displayHistory() {
         if (scanHistory.length === 0) {
             // Show empty state
@@ -112,17 +193,25 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Generate skills HTML
         let matchingSkillsHTML = '';
-        item.matchingSkills.forEach(skill => {
-            matchingSkillsHTML += `<span class="badge badge-match m-1 p-2">${skill}</span>`;
-        });
+        if (item.matchingSkills && item.matchingSkills.length > 0) {
+            item.matchingSkills.forEach(skill => {
+                matchingSkillsHTML += `<span class="badge badge-match m-1 p-2">${skill}</span>`;
+            });
+        } else {
+            matchingSkillsHTML = '<span class="text-muted">No skills found in resume</span>';
+        }
         
         // We're no longer using missing skills
         
         // Generate insights HTML
         let insightsHTML = '';
-        item.insights.forEach(insight => {
-            insightsHTML += `<div class="insight-item"><i class="fas fa-lightbulb text-warning me-2"></i>${insight}</div>`;
-        });
+        if (item.insights && item.insights.length > 0) {
+            item.insights.forEach(insight => {
+                insightsHTML += `<div class="insight-item"><i class="fas fa-lightbulb text-warning me-2"></i>${insight}</div>`;
+            });
+        } else {
+            insightsHTML = '<p class="text-muted">No insights available</p>';
+        }
         
         // Generate query response HTML
         let queryHTML = '';
@@ -170,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <h5>Query</h5>
                     <div class="p-3 bg-light rounded">
                         <div style="max-height: 200px; overflow-y: auto;">
-                            ${item.queryPrompt}
+                            ${item.queryPrompt || 'No query provided'}
                         </div>
                     </div>
                 </div>
@@ -180,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="col-md-12">
                     <h5>Skills Found</h5>
                     <div class="d-flex flex-wrap mb-3">
-                        ${matchingSkillsHTML || '<span class="text-muted">No skills found in resume</span>'}
+                        ${matchingSkillsHTML}
                     </div>
                 </div>
             </div>

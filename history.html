@@ -27,7 +27,16 @@
                     <li class="nav-item">
                         <a class="nav-link" href="pricing.html">Pricing</a>
                     </li>
+                    <li class="nav-item" id="adminNavItem" style="display: none;">
+                        <a class="nav-link" href="admin.html">Admin</a>
+                    </li>
                 </ul>
+                <div class="ms-2 d-flex align-items-center">
+                    <button class="btn btn-outline-light btn-sm" id="userLoginBtn" data-bs-toggle="modal" data-bs-target="#loginModal">
+                        <i class="fas fa-user me-1"></i> <span id="loginBtnText">Login</span>
+                    </button>
+                    <span id="proStatusBadge" class="ms-2 badge bg-warning" style="display: none;">PRO</span>
+                </div>
             </div>
         </div>
     </nav>
@@ -133,6 +142,50 @@
             </div>
         </div>
     </footer>
+    
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="loginModalLabel">User Login</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="loginEmail" required placeholder="your@email.com">
+                            <div class="form-text">Enter your email to identify your account.</div>
+                        </div>
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Login</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="logoutModalLabel">Logout Confirmation</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to logout from <span id="currentUserEmail" class="fw-bold"></span>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="confirmLogoutBtn" class="btn btn-danger">Logout</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/history.js"></script>
