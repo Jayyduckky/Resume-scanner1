@@ -2,7 +2,9 @@
 
 // Set up PDF.js worker
 if (typeof pdfjsLib !== 'undefined') {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
+    // Use the worker from CDN (already loaded separately in HTML)
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+    console.log('PDF.js worker configured');
 }
 
 // Function to check if user has PRO access
@@ -279,23 +281,59 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 // Check if PDF.js is available
                 if (typeof pdfjsLib === 'undefined') {
-                    throw new Error('PDF.js library not loaded. Please check your internet connection.');
+                    console.error('PDF.js library not loaded');
+                    alert('PDF processing library not available. Please check your internet connection and try again.');
+                    scanButton.disabled = false;
+                    scanButton.innerHTML = '<i class="fas fa-search me-1"></i> Scan Resume';
+                    return;
                 }
                 
-                // Initialize PDF.js
+                console.log('Processing PDF file...');
+                
+                // Initialize PDF.js with explicit options for better compatibility
                 const typedArray = new Uint8Array(e.target.result);
-                const loadingTask = pdfjsLib.getDocument({ data: typedArray });
+                const loadingTask = pdfjsLib.getDocument({
+                    data: typedArray,
+                    nativeImageDecoderSupport: 'display',
+                    isEvalSupported: true,
+                    disableFontFace: false
+                });
                 
                 loadingTask.promise.then(async function(pdf) {
+                    console.log(`PDF loaded successfully. Pages: ${pdf.numPages}`);
                     let fullText = '';
                     
-                    // Extract text from all pages
-                    for (let i = 1; i <= pdf.numPages; i++) {
-                        const page = await pdf.getPage(i);
-                        const textContent = await page.getTextContent();
-                        const pageText = textContent.items.map(item => item.str).join(' ');
-                        fullText += pageText + ' ';
+                    try {
+                        // Extract text from all pages with additional error handling
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            console.log(`Processing page ${i}/${pdf.numPages}`);
+                            try {
+                                const page = await pdf.getPage(i);
+                                const textContent = await page.getTextContent();
+                                const pageText = textContent.items.map(item => item.str).join(' ');
+                                fullText += pageText + ' ';
+                                console.log(`Page ${i} text length: ${pageText.length} chars`);
+                            } catch (pageError) {
+                                console.error(`Error processing page ${i}:`, pageError);
+                                // Continue with other pages even if one fails
+                            }
+                        }
+                        
+                        // If we couldn't extract any text, try a fallback approach
+                        if (!fullText.trim()) {
+                            console.log('No text extracted from PDF, trying alternative approach');
+                            // For some PDFs, we might need to try a different approach
+                            fullText = "This resume appears to be image-based or using non-standard fonts. " +
+                                      "Please try uploading a text-based PDF or a DOCX file for better results.";
+                        }
+                    
+                    } catch (textExtractionError) {
+                        console.error('Error extracting text from PDF:', textExtractionError);
+                        fullText = "Error extracting text from PDF. This may be due to the PDF structure or security settings.";
                     }
+                    
+                    console.log(`Total text extracted from PDF: ${fullText.length} chars`);
+                    console.log('Sample text:', fullText.substring(0, 100) + '...');
                     
                     try {
                         // Call the AI service to analyze the resume
@@ -329,6 +367,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }).catch(function(error) {
                     console.error('Error parsing PDF:', error);
                     
+                    // Try a fallback approach for PDF extraction
+                    console.log('Attempting fallback PDF extraction method...');
+                    
+                    // In a production app, you might use a server-side PDF extraction service here
+                    // For now, we'll create a custom error message with troubleshooting tips
+                    
                     // Show detailed error in results section for better debugging
                     const errorResult = {
                         fileName: fileName,
@@ -338,12 +382,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         matchScore: 0,
                         matchingSkills: [],
                         missingSkills: [],
-                        candidateName: "Error Processing PDF",
+                        candidateName: "PDF Processing Issue",
                         candidateEmail: "Unknown",
                         candidatePhone: "Unknown",
                         yearsOfExperience: 0,
-                        queryResponse: `There was an error parsing your PDF file: ${error.message || 'Unknown error'}. Please ensure it's a valid PDF that isn't password-protected.`,
-                        insights: ["PDF parsing error. Try a different file format or check if the PDF is corrupted."]
+                        queryResponse: `We're having trouble processing this particular PDF file. This could be due to:
+                            <ul>
+                                <li>The PDF contains only images/scanned content</li>
+                                <li>The PDF uses custom fonts that aren't embedded</li>
+                                <li>The PDF has security restrictions</li>
+                            </ul>
+                            <p>Try converting your PDF to text format using an online PDF to DOC converter, or try a different PDF.</p>`,
+                        insights: ["PDF parsing issue detected. For best results, use text-based PDFs without security restrictions."]
                     };
                     
                     // Store and display the error result
@@ -382,6 +432,9 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 // Get resume text content
                 const resumeText = e.target.result;
+                
+                console.log('Processing text file...', fileName);
+                console.log(`Text file content length: ${resumeText.length} chars`);
                 
                 // Call the AI service to analyze the resume
                 const aiAnalysisResult = await window.AIService.analyzeResume(

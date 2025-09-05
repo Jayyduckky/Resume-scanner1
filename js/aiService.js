@@ -46,6 +46,14 @@ const AIService = {
         // In a production environment, you would make a real API call
         // For this demo, we'll extract information directly from the resume text
         
+        console.log('AI Service: Analyzing resume content with length:', resumeText.length);
+        
+        // Check if we received a very short or empty text (indicates possible PDF parsing issues)
+        if (!resumeText || resumeText.trim().length < 50) {
+            console.warn('AI Service: Resume text is too short or empty:', resumeText);
+            return "Error extracting text from PDF. This may be due to the PDF structure or security settings.";
+        }
+        
         // This is where you would typically have code like:
         /*
         const response = await fetch(this.apiEndpoint, {
@@ -81,6 +89,30 @@ const AIService = {
     
     // Process the resume text to extract information
     processAIResponse: function(resumeText, queryPrompt, originalText) {
+        // Add debugging logs
+        console.log('AI Service: Processing resume text, length:', resumeText.length);
+        
+        // Check if the resume text contains error indicators
+        if (resumeText.includes("image-based or using non-standard fonts") || 
+            resumeText.includes("Error extracting text from PDF")) {
+            console.log('AI Service: Detected PDF extraction error message');
+            return {
+                matchScore: 0,
+                matchingSkills: [],
+                missingSkills: [],
+                candidateName: "PDF Processing Issue",
+                candidateEmail: "Unknown",
+                candidatePhone: "Unknown",
+                yearsOfExperience: 0,
+                queryResponse: `We're having trouble extracting text from this PDF file. It may be an image-based PDF or use custom fonts. Try uploading a text-based PDF or a DOC/DOCX file.`,
+                insights: [
+                    "PDF parsing issue detected.", 
+                    "This PDF may contain scanned images instead of text.",
+                    "Try using a different file format or a PDF with selectable text."
+                ]
+            };
+        }
+        
         // Extract basic information from resume
         const lines = resumeText.split('\n');
         

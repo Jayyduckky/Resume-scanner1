@@ -281,8 +281,8 @@
                                 <label class="form-check-label" for="creditCard">Credit Card</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="paymentMethod" id="paypal" value="paypal">
-                                <label class="form-check-label" for="paypal">PayPal</label>
+                                <input class="form-check-input" type="radio" name="paymentMethod" id="stripe" value="stripe">
+                                <label class="form-check-label" for="stripe">Stripe</label>
                             </div>
                         </div>
                         
@@ -308,8 +308,20 @@
                             </div>
                         </div>
                         
-                        <!-- PayPal Button Container -->
-                        <div id="paypal-button-container" style="display: none;"></div>
+                        <!-- Stripe Elements Container -->
+                        <div id="stripe-elements-container" style="display: none;">
+                            <div class="mb-4">
+                                <label class="form-label">Card Information</label>
+                                <div id="card-element" class="form-control p-3 mb-2" style="min-height: 44px;">
+                                    <!-- Stripe Elements will be inserted here -->
+                                </div>
+                                <div id="card-errors" class="text-danger small" role="alert"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="stripeName" class="form-label">Name on Card</label>
+                                <input type="text" class="form-control" id="stripeName" placeholder="John Smith">
+                            </div>
+                        </div>
                         
                         <div class="alert alert-info mt-3">
                             <div class="d-flex">
@@ -414,8 +426,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- PayPal SDK -->
-    <script src="https://www.paypal.com/sdk/js?client-id=sb" data-sdk-integration-source="button-factory"></script>
+    <!-- Stripe SDK -->
+    <script src="https://js.stripe.com/v3/"></script>
     <script src="js/pricing.js"></script>
 </body>
 </html>
