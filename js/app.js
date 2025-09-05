@@ -1,11 +1,6 @@
 // ResumeAI Scanner Application
 
-// Set up PDF.js worker
-if (typeof pdfjsLib !== 'undefined') {
-    // Use the worker from CDN (already loaded separately in HTML)
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-    console.log('PDF.js worker configured');
-}
+// PDF.js worker now configured in pdfHandler.js
 
 // Function to check if user has PRO access
 function checkProAccess() {
@@ -273,107 +268,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Process PDF file
+    // Process PDF file with our improved PDFHandler
     function processPDFFile(file, fileName, fileSize, queryPrompt) {
         const reader = new FileReader();
         
         reader.onload = async function(e) {
             try {
-                // Check if PDF.js is available
-                if (typeof pdfjsLib === 'undefined') {
-                    console.error('PDF.js library not loaded');
+                // Check if our PDFHandler is available
+                if (typeof window.PDFHandler === 'undefined') {
+                    console.error('PDFHandler not loaded');
                     alert('PDF processing library not available. Please check your internet connection and try again.');
                     scanButton.disabled = false;
                     scanButton.innerHTML = '<i class="fas fa-search me-1"></i> Scan Resume';
                     return;
                 }
                 
-                console.log('Processing PDF file...');
+                console.log('Processing PDF file using PDFHandler...');
                 
-                // Initialize PDF.js with explicit options for better compatibility
-                const typedArray = new Uint8Array(e.target.result);
-                const loadingTask = pdfjsLib.getDocument({
-                    data: typedArray,
-                    nativeImageDecoderSupport: 'display',
-                    isEvalSupported: true,
-                    disableFontFace: false
-                });
+                // Extract text from PDF using our specialized handler
+                const pdfResult = await window.PDFHandler.extractText(e.target.result);
                 
-                loadingTask.promise.then(async function(pdf) {
-                    console.log(`PDF loaded successfully. Pages: ${pdf.numPages}`);
-                    let fullText = '';
+                if (!pdfResult.success) {
+                    console.error('PDF extraction failed:', pdfResult.error);
                     
-                    try {
-                        // Extract text from all pages with additional error handling
-                        for (let i = 1; i <= pdf.numPages; i++) {
-                            console.log(`Processing page ${i}/${pdf.numPages}`);
-                            try {
-                                const page = await pdf.getPage(i);
-                                const textContent = await page.getTextContent();
-                                const pageText = textContent.items.map(item => item.str).join(' ');
-                                fullText += pageText + ' ';
-                                console.log(`Page ${i} text length: ${pageText.length} chars`);
-                            } catch (pageError) {
-                                console.error(`Error processing page ${i}:`, pageError);
-                                // Continue with other pages even if one fails
-                            }
-                        }
-                        
-                        // If we couldn't extract any text, try a fallback approach
-                        if (!fullText.trim()) {
-                            console.log('No text extracted from PDF, trying alternative approach');
-                            // For some PDFs, we might need to try a different approach
-                            fullText = "This resume appears to be image-based or using non-standard fonts. " +
-                                      "Please try uploading a text-based PDF or a DOCX file for better results.";
-                        }
-                    
-                    } catch (textExtractionError) {
-                        console.error('Error extracting text from PDF:', textExtractionError);
-                        fullText = "Error extracting text from PDF. This may be due to the PDF structure or security settings.";
-                    }
-                    
-                    console.log(`Total text extracted from PDF: ${fullText.length} chars`);
-                    console.log('Sample text:', fullText.substring(0, 100) + '...');
-                    
-                    try {
-                        // Call the AI service to analyze the resume
-                        const aiAnalysisResult = await window.AIService.analyzeResume(
-                            fullText,
-                            queryPrompt
-                        );
-                        
-                        // Create the complete result object
-                        const resultData = {
-                            fileName: fileName,
-                            fileSize: fileSize,
-                            timestamp: new Date().toISOString(),
-                            queryPrompt: queryPrompt,
-                            ...aiAnalysisResult // Spread the AI analysis results
-                        };
-                        
-                        // Store current scan data
-                        currentScanData = resultData;
-                        
-                        // Display results
-                        displayResults(resultData);
-                    } catch (error) {
-                        console.error('Error analyzing resume:', error);
-                        alert('There was an error analyzing your resume. Please try again.');
-                    } finally {
-                        // Reset form state
-                        scanButton.disabled = false;
-                        scanButton.innerHTML = '<i class="fas fa-search me-1"></i> Scan Resume';
-                    }
-                }).catch(function(error) {
-                    console.error('Error parsing PDF:', error);
-                    
-                    // Try a fallback approach for PDF extraction
-                    console.log('Attempting fallback PDF extraction method...');
-                    
-                    // In a production app, you might use a server-side PDF extraction service here
-                    // For now, we'll create a custom error message with troubleshooting tips
-                    
-                    // Show detailed error in results section for better debugging
+                    // Show user-friendly error
                     const errorResult = {
                         fileName: fileName,
                         fileSize: fileSize,
@@ -386,28 +304,62 @@ document.addEventListener('DOMContentLoaded', function() {
                         candidateEmail: "Unknown",
                         candidatePhone: "Unknown",
                         yearsOfExperience: 0,
-                        queryResponse: `We're having trouble processing this particular PDF file. This could be due to:
+                        queryResponse: `<strong>Your PDF could not be processed</strong><br><br>
+                            This usually happens when:
                             <ul>
-                                <li>The PDF contains only images/scanned content</li>
-                                <li>The PDF uses custom fonts that aren't embedded</li>
-                                <li>The PDF has security restrictions</li>
+                                <li>The PDF contains scanned images instead of actual text</li>
+                                <li>The PDF has security restrictions that prevent text extraction</li>
+                                <li>The PDF uses custom fonts that aren't properly embedded</li>
                             </ul>
-                            <p>Try converting your PDF to text format using an online PDF to DOC converter, or try a different PDF.</p>`,
-                        insights: ["PDF parsing issue detected. For best results, use text-based PDFs without security restrictions."]
+                            <p>Try these solutions:</p>
+                            <ol>
+                                <li>Convert your PDF to a Word document using an online converter, then save as PDF again</li>
+                                <li>Use a plain text (.txt) version of your resume instead</li>
+                                <li>Make sure your PDF has selectable text (you can test this by trying to select text in your PDF viewer)</li>
+                            </ol>`,
+                        insights: ["Unable to process this PDF file.", "Try using a text-based PDF format or .docx file instead."]
                     };
                     
-                    // Store and display the error result
+                    // Show the error
                     currentScanData = errorResult;
                     displayResults(errorResult);
-                    
-                    // Reset form state
                     scanButton.disabled = false;
                     scanButton.innerHTML = '<i class="fas fa-search me-1"></i> Scan Resume';
-                });
-            } catch (error) {
-                console.error('Error loading PDF:', error);
-                alert('Error loading the PDF file. Please try again.');
+                    return;
+                }
                 
+                // Success! We have extracted text
+                console.log(`Successfully extracted text from PDF: ${pdfResult.text.length} chars`);
+                
+                try {
+                    // Call the AI service to analyze the resume
+                    const aiAnalysisResult = await window.AIService.analyzeResume(
+                        pdfResult.text,
+                        queryPrompt
+                    );
+                    
+                    // Create the complete result object
+                    const resultData = {
+                        fileName: fileName,
+                        fileSize: fileSize,
+                        timestamp: new Date().toISOString(),
+                        queryPrompt: queryPrompt,
+                        ...aiAnalysisResult // Spread the AI analysis results
+                    };
+                    
+                    // Store current scan data
+                    currentScanData = resultData;
+                    
+                    // Display results
+                    displayResults(resultData);
+                } catch (error) {
+                    console.error('Error analyzing resume:', error);
+                    alert('There was an error analyzing your resume. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error in PDF processing:', error);
+                alert('Error processing the PDF file. Please try again with a different file format.');
+            } finally {
                 // Reset form state
                 scanButton.disabled = false;
                 scanButton.innerHTML = '<i class="fas fa-search me-1"></i> Scan Resume';

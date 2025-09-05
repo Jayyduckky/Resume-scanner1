@@ -323,12 +323,15 @@ const AIService = {
         let candidateEmail = "unknown@example.com";
         let candidatePhone = "Unknown";
         
+        console.log('AI Service: Using fallback response handler');
+        
         try {
             // Try to extract email
             const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
             const emailMatch = resumeText.match(emailRegex);
             if (emailMatch) {
                 candidateEmail = emailMatch[0];
+                console.log('AI Service: Extracted email in fallback:', candidateEmail);
             }
             
             // Try to extract phone
@@ -336,6 +339,15 @@ const AIService = {
             const phoneMatch = resumeText.match(phoneRegex);
             if (phoneMatch) {
                 candidatePhone = phoneMatch[0];
+                console.log('AI Service: Extracted phone in fallback:', candidatePhone);
+            }
+            
+            // Try to find a name-like pattern (basic attempt)
+            const namePattern = /([A-Z][a-z]+\s+[A-Z][a-z]+)/;
+            const nameMatch = resumeText.match(namePattern);
+            if (nameMatch) {
+                candidateName = nameMatch[0];
+                console.log('AI Service: Possible name found in fallback:', candidateName);
             }
         } catch (e) {
             console.error("Error in fallback response:", e);
@@ -349,8 +361,20 @@ const AIService = {
             candidateEmail: candidateEmail,
             candidatePhone: candidatePhone,
             yearsOfExperience: 0,
-            queryResponse: "Sorry, I couldn't analyze this resume properly. Please try again with a different file or query.",
-            insights: ["Error processing the resume. Please check the file format and try again."]
+            queryResponse: `
+                <strong>Analysis Problem</strong><br><br>
+                I couldn't properly analyze this resume. This might be due to:
+                <ul>
+                    <li>The file format (try using .docx or .txt format)</li>
+                    <li>If using PDF, make sure the text is selectable</li>
+                    <li>The resume might have unusual formatting</li>
+                </ul>
+                <p>Please try uploading a different version of your resume.</p>
+            `,
+            insights: [
+                "Resume analysis encountered issues.",
+                "Try using a different file format or a text-based version."
+            ]
         };
     }
 };
