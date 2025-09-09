@@ -291,7 +291,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!pdfResult.success) {
                     console.error('PDF extraction failed:', pdfResult.error);
                     
-                    // Show user-friendly error
+                    // Show more specific user-friendly error based on debug info
+                    let errorMessage = `<strong>Your PDF could not be processed</strong><br><br>`;
+                    let insights = ["Unable to process this PDF file."];
+                    
+                    // Add more specific error messages if we have debug info
+                    if (pdfResult.debugInfo) {
+                        console.log('PDF Debug Info:', pdfResult.debugInfo);
+                        
+                        if (pdfResult.debugInfo.extractedChars === 0) {
+                            errorMessage += `
+                            <p>No text could be extracted from your PDF. This usually happens when:</p>
+                            <ul>
+                                <li>The PDF contains <strong>scanned images</strong> without OCR</li>
+                                <li>The PDF has <strong>security restrictions</strong> that prevent text extraction</li>
+                                <li>The PDF uses <strong>custom fonts</strong> that aren't properly embedded</li>
+                            </ul>`;
+                            insights.push("No text could be extracted - likely an image-based PDF.");
+                        } else if (pdfResult.debugInfo.extractedChars < 10) {
+                            errorMessage += `
+                            <p>Very little text could be extracted from your PDF (${pdfResult.debugInfo.extractedChars} characters). This usually happens when:</p>
+                            <ul>
+                                <li>The PDF contains mostly <strong>images</strong> with minimal text</li>
+                                <li>The PDF uses <strong>non-standard text encoding</strong></li>
+                                <li>The text in the PDF is actually part of embedded <strong>graphics or logos</strong></li>
+                            </ul>`;
+                            insights.push(`Minimal text extracted (${pdfResult.debugInfo.extractedChars} chars) - check PDF format.`);
+                        }
+                    } else {
+                        // Generic message if we don't have debug info
+                        errorMessage += `
+                        <p>This usually happens when:</p>
+                        <ul>
+                            <li>The PDF contains scanned images instead of actual text</li>
+                            <li>The PDF has security restrictions that prevent text extraction</li>
+                            <li>The PDF uses custom fonts that aren't properly embedded</li>
+                        </ul>`;
+                    }
+                    
+                    errorMessage += `
+                    <p>Try these solutions:</p>
+                    <ol>
+                        <li>Convert your PDF to a Word document using an online converter, then save as PDF again</li>
+                        <li>Use a plain text (.txt) version of your resume instead</li>
+                        <li>Make sure your PDF has selectable text (you can test this by trying to select text in your PDF viewer)</li>
+                        <li>If you're certain your PDF has selectable text, try opening it in a different PDF reader and copying all the text to a plain text file</li>
+                    </ol>`;
+                    
+                    // Create the error result
                     const errorResult = {
                         fileName: fileName,
                         fileSize: fileSize,
@@ -304,20 +351,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         candidateEmail: "Unknown",
                         candidatePhone: "Unknown",
                         yearsOfExperience: 0,
-                        queryResponse: `<strong>Your PDF could not be processed</strong><br><br>
-                            This usually happens when:
-                            <ul>
-                                <li>The PDF contains scanned images instead of actual text</li>
-                                <li>The PDF has security restrictions that prevent text extraction</li>
-                                <li>The PDF uses custom fonts that aren't properly embedded</li>
-                            </ul>
-                            <p>Try these solutions:</p>
-                            <ol>
-                                <li>Convert your PDF to a Word document using an online converter, then save as PDF again</li>
-                                <li>Use a plain text (.txt) version of your resume instead</li>
-                                <li>Make sure your PDF has selectable text (you can test this by trying to select text in your PDF viewer)</li>
-                            </ol>`,
-                        insights: ["Unable to process this PDF file.", "Try using a text-based PDF format or .docx file instead."]
+                        queryResponse: errorMessage,
+                        insights: insights,
+                        analysisError: true
                     };
                     
                     // Show the error
@@ -330,6 +366,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Success! We have extracted text
                 console.log(`Successfully extracted text from PDF: ${pdfResult.text.length} chars`);
+                
+                // Check if there are warnings about limited text extraction
+                if (pdfResult.partialSuccess || pdfResult.warning || pdfResult.fallbacksUsed) {
+                    console.warn('PDF extraction used fallback methods or returned partial results:', 
+                                {warning: pdfResult.warning, fallbacksUsed: pdfResult.fallbacksUsed});
+                    
+                    // Display a user-friendly warning message
+                    if (pdfResult.text.length > 0) {
+                        // We still have some text, so show a warning but continue
+                        alert("Note: Your PDF was processed but some text might be missing. For best results, try using a different format like .docx or plain text.");
+                    }
+                }
                 
                 try {
                     // Call the AI service to analyze the resume
