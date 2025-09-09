@@ -284,6 +284,10 @@
                                 <input class="form-check-input" type="radio" name="paymentMethod" id="stripe" value="stripe">
                                 <label class="form-check-label" for="stripe">Stripe</label>
                             </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="paymentMethod" id="paypal" value="paypal">
+                                <label class="form-check-label" for="paypal">PayPal</label>
+                            </div>
                         </div>
                         
                         <!-- Credit Card Form -->
@@ -321,6 +325,11 @@
                                 <label for="stripeName" class="form-label">Name on Card</label>
                                 <input type="text" class="form-control" id="stripeName" placeholder="John Smith">
                             </div>
+                        </div>
+                        
+                        <!-- PayPal Button Container -->
+                        <div id="paypal-button-container" style="display: none;">
+                            <!-- PayPal button will be rendered here -->
                         </div>
                         
                         <div class="alert alert-info mt-3">
@@ -428,6 +437,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Stripe SDK -->
     <script src="https://js.stripe.com/v3/"></script>
+    <!-- PayPal SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=sb&currency=USD"></script>
     <script src="js/pricing.js"></script>
 </body>
 </html>

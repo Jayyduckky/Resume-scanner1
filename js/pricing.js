@@ -287,24 +287,44 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Payment Method Toggle
     const creditCardRadio = document.getElementById('creditCard');
+    const stripeRadio = document.getElementById('stripe');
     const paypalRadio = document.getElementById('paypal');
     const creditCardForm = document.getElementById('creditCardForm');
+    const stripeElementsContainer = document.getElementById('stripe-elements-container');
     const paypalButtonContainer = document.getElementById('paypal-button-container');
     
-    if (creditCardRadio && paypalRadio && creditCardForm && paypalButtonContainer) {
+    if (creditCardRadio && stripeRadio && paypalRadio) {
+        // Credit Card selected
         creditCardRadio.addEventListener('change', function() {
             if (this.checked) {
-                creditCardForm.style.display = 'block';
-                paypalButtonContainer.style.display = 'none';
+                if (creditCardForm) creditCardForm.style.display = 'block';
+                if (stripeElementsContainer) stripeElementsContainer.style.display = 'none';
+                if (paypalButtonContainer) paypalButtonContainer.style.display = 'none';
+                if (confirmPaymentBtn) confirmPaymentBtn.style.display = 'block';
             }
         });
         
+        // Stripe selected
+        stripeRadio.addEventListener('change', function() {
+            if (this.checked) {
+                if (creditCardForm) creditCardForm.style.display = 'none';
+                if (stripeElementsContainer) stripeElementsContainer.style.display = 'block';
+                if (paypalButtonContainer) paypalButtonContainer.style.display = 'none';
+                if (confirmPaymentBtn) confirmPaymentBtn.style.display = 'block';
+                // Initialize Stripe (not implemented yet)
+            }
+        });
+        
+        // PayPal selected
         paypalRadio.addEventListener('change', function() {
             if (this.checked) {
-                creditCardForm.style.display = 'none';
-                paypalButtonContainer.style.display = 'block';
-                // For a real PayPal integration, you would use this code:
-                // initPayPalButton();
+                if (creditCardForm) creditCardForm.style.display = 'none';
+                if (stripeElementsContainer) stripeElementsContainer.style.display = 'none';
+                if (paypalButtonContainer) paypalButtonContainer.style.display = 'block';
+                if (confirmPaymentBtn) confirmPaymentBtn.style.display = 'none'; // Hide the regular payment button
+                
+                // Initialize PayPal button
+                initPayPalButton();
             }
         });
     }
@@ -334,13 +354,27 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // PayPal Button Integration
     function initPayPalButton() {
-        // This would be your actual PayPal integration
-        // You'll need to sign up for a PayPal Developer account
-        // and get your client ID
+        // Make sure we have a paypal-button-container
+        const paypalButtonContainer = document.getElementById('paypal-button-container');
+        if (!paypalButtonContainer) {
+            console.error('PayPal button container not found');
+            return;
+        }
         
-        const PAYPAL_CLIENT_ID = 'YOUR_PAYPAL_CLIENT_ID';
+        // Clear any existing buttons
+        paypalButtonContainer.innerHTML = '';
         
-        paypal.Buttons({
+        // Check if the PayPal SDK is loaded
+        if (!window.paypal) {
+            console.error('PayPal SDK not loaded');
+            paypalButtonContainer.innerHTML = '<div class="text-center p-4 border rounded">Loading PayPal button...</div>';
+            return;
+        }
+        
+        const amount = selectedPlan === 'monthly' ? '9.99' : '99.00';
+        
+        // Render the PayPal button
+        window.paypal.Buttons({
             style: {
                 shape: 'rect',
                 color: 'blue',
@@ -354,7 +388,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     purchase_units: [{
                         amount: {
                             currency_code: 'USD',
-                            value: selectedPlan === 'monthly' ? '9.99' : '99.00'
+                            value: amount
                         },
                         description: selectedPlan === 'monthly' ? 
                             'ResumeAI PRO Monthly Subscription' : 
@@ -369,6 +403,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     localStorage.setItem('proUser', 'true');
                     localStorage.setItem('proType', selectedPlan);
                     localStorage.setItem('proStartDate', new Date().toISOString());
+                    
+                    // Create user record for PRO list with appropriate expiry date
+                    let expiryDate = 'unlimited';
+                    if (selectedPlan === 'monthly') {
+                        const date = new Date();
+                        date.setMonth(date.getMonth() + 1);
+                        expiryDate = date.toISOString();
+                    } else if (selectedPlan === 'annual') {
+                        const date = new Date();
+                        date.setFullYear(date.getFullYear() + 1);
+                        expiryDate = date.toISOString();
+                    }
+                    
+                    // Add user to PRO list
+                    const userEmail = localStorage.getItem('userEmail');
+                    if (userEmail) {
+                        const proUser = {
+                            email: userEmail,
+                            addedOn: new Date().toISOString(),
+                            expires: expiryDate
+                        };
+                        addProUser(proUser);
+                    }
                     
                     // Show success message
                     if (paymentDetails) paymentDetails.style.display = 'none';
@@ -390,6 +447,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 3000);
                 });
             }
-        }).render('#paypal-button-container');
+        }).render(paypalButtonContainer);
     }
 });
