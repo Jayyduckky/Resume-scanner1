@@ -1,0 +1,207 @@
+/* Login Page Styles */
+
+body.login-page {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 0;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+}
+
+.login-container {
+    background-color: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    max-width: 100%;
+}
+
+.login-container h1 {
+    color: #fff;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    padding: 12px 16px;
+    height: auto;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.form-control:focus {
+    background-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+
+.btn-login {
+    background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #fff;
+    transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+    background: linear-gradient(90deg, #4338ca 0%, #6d28d9 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+.btn-login:active {
+    transform: translateY(0);
+}
+
+.forgot-password {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+}
+
+.forgot-password:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+.form-check-input {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    width: 18px;
+    height: 18px;
+}
+
+.form-check-input:checked {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 1.5rem 0;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.divider span {
+    padding: 0 1rem;
+    font-size: 0.9rem;
+}
+
+.btn-social {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    transition: all 0.2s ease;
+    gap: 8px;
+}
+
+.btn-social:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+}
+
+.btn-social img,
+.btn-social i {
+    margin-right: 8px;
+}
+
+.signup-link, 
+.terms-link, 
+.privacy-link {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.signup-link:hover,
+.terms-link:hover,
+.privacy-link:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 16px;
+    top: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.password-toggle:hover {
+    color: #fff;
+}
+
+/* Modal customization */
+.modal-content {
+    background-color: #f8fafc;
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1.25rem 1.5rem;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-title {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .login-container {
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+    
+    .row.social-login {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .row.social-login .col-6 {
+        width: 100%;
+        padding: 0;
+    }
+}

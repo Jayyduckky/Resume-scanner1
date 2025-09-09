@@ -153,7 +153,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const logoutModal = new bootstrap.Modal(document.getElementById('logoutModal'));
             logoutModal.show();
         } else {
-            // User is not logged in, login modal will be shown by data-bs-toggle
+            // User is not logged in, redirect to login page
+            window.location.href = 'login.html';
         }
     }
     
