@@ -598,7 +598,7 @@ const AIService = {
         
         return {
             matchScore: 0,
-            matchingSkills: ['Communication', 'Problem Solving', 'Teamwork'],
+            matchingSkills: [],
             missingSkills: [],
             candidateName: candidateName,
             candidateEmail: candidateEmail,
@@ -617,7 +617,9 @@ const AIService = {
             insights: [
                 "Resume analysis encountered issues.",
                 "Try using a different file format or a text-based version."
-            ]
+            ],
+            // Add error flag to indicate analysis failure
+            analysisError: true
         };
     }
 };

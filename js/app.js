@@ -338,7 +338,27 @@ document.addEventListener('DOMContentLoaded', function() {
                         queryPrompt
                     );
                     
-                    // Perform ATS compatibility analysis
+                    // Check if analysis failed
+                    if (aiAnalysisResult.analysisError) {
+                        // If analysis failed, don't perform ATS analysis
+                        const resultData = {
+                            fileName: fileName,
+                            fileSize: fileSize,
+                            timestamp: new Date().toISOString(),
+                            queryPrompt: queryPrompt,
+                            ...aiAnalysisResult, // Spread the AI analysis results
+                            analysisError: true
+                        };
+                        
+                        // Store current scan data
+                        currentScanData = resultData;
+                        
+                        // Display error results
+                        displayResults(resultData);
+                        return;
+                    }
+                    
+                    // If analysis successful, perform ATS compatibility analysis
                     const atsAnalysisResult = await window.AIService.analyzeATSCompatibility(
                         pdfResult.text
                     );
@@ -400,7 +420,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     queryPrompt
                 );
                 
-                // Perform ATS compatibility analysis
+                // Check if analysis failed
+                if (aiAnalysisResult.analysisError) {
+                    // If analysis failed, don't perform ATS analysis
+                    const resultData = {
+                        fileName: fileName,
+                        fileSize: fileSize,
+                        timestamp: new Date().toISOString(),
+                        queryPrompt: queryPrompt,
+                        ...aiAnalysisResult, // Spread the AI analysis results
+                        analysisError: true
+                    };
+                    
+                    // Store current scan data
+                    currentScanData = resultData;
+                    
+                    // Display error results
+                    displayResults(resultData);
+                    return;
+                }
+                
+                // If analysis successful, perform ATS compatibility analysis
                 const atsAnalysisResult = await window.AIService.analyzeATSCompatibility(
                     resumeText
                 );
@@ -446,9 +486,38 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsSection.style.display = 'block';
         resultsSection.scrollIntoView({ behavior: 'smooth' });
         
+        // Check if analysis encountered an error
+        if (data.analysisError) {
+            // Hide ATS score section and other analysis sections if there was an error
+            const atsScoreSection = document.querySelector('.card.mt-4.mb-4:nth-of-type(2)');
+            if (atsScoreSection) atsScoreSection.style.display = 'none';
+            
+            // Make sure other sections are visible for error display
+            const matchDetailsElement = document.getElementById('matchDetails');
+            if (matchDetailsElement) {
+                matchDetailsElement.innerHTML = '<p class="text-muted">Analysis failed. Please upload a different file format.</p>';
+            }
+            
+            const aiInsightsElement = document.getElementById('aiInsights');
+            if (aiInsightsElement) {
+                let insightsHTML = '';
+                data.insights.forEach(insight => {
+                    insightsHTML += `<div class="insight-item"><i class="fas fa-exclamation-triangle text-warning me-2"></i>${insight}</div>`;
+                });
+                aiInsightsElement.innerHTML = insightsHTML;
+            }
+            
+            return;
+        }
+        
+        // If no error, continue with normal display
         // Display ATS results if available
         if (data.ats) {
             displayATSResults(data.ats);
+        } else {
+            // Hide ATS section if no data available
+            const atsScoreSection = document.querySelector('.card.mt-4.mb-4:nth-of-type(2)');
+            if (atsScoreSection) atsScoreSection.style.display = 'none';
         }
         
         // Display skills
