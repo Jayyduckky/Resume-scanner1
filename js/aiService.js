@@ -604,16 +604,7 @@ const AIService = {
             candidateEmail: candidateEmail,
             candidatePhone: candidatePhone,
             yearsOfExperience: 0,
-            queryResponse: `
-                <strong>Analysis Problem</strong><br><br>
-                I couldn't properly analyze this resume. This might be due to:
-                <ul>
-                    <li>The file format (try using .docx or .txt format)</li>
-                    <li>If using PDF, make sure the text is selectable</li>
-                    <li>The resume might have unusual formatting</li>
-                </ul>
-                <p>Please try uploading a different version of your resume.</p>
-            `,
+            queryResponse: "Analysis Problem",
             insights: [
                 "Resume analysis encountered issues.",
                 "Try using a different file format or a text-based version."

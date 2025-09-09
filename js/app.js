@@ -492,6 +492,23 @@ document.addEventListener('DOMContentLoaded', function() {
             const atsScoreSection = document.querySelector('.card.mt-4.mb-4:nth-of-type(2)');
             if (atsScoreSection) atsScoreSection.style.display = 'none';
             
+            // Display query result error message
+            if (queryResultElement) {
+                queryResultElement.innerHTML = `
+                    <div class="alert alert-warning">
+                        <strong>Query:</strong> ${data.queryPrompt}<br><br>
+                        <strong>Response:</strong> <span class="text-danger">Analysis Problem</span><br>
+                        <p>I couldn't properly analyze this resume. This might be due to:</p>
+                        <ul>
+                            <li>The file format (try using .docx or .txt format)</li>
+                            <li>If using PDF, make sure the text is selectable</li>
+                            <li>The resume might have unusual formatting</li>
+                        </ul>
+                        <p>Please try uploading a different version of your resume.</p>
+                    </div>
+                `;
+            }
+            
             // Make sure other sections are visible for error display
             const matchDetailsElement = document.getElementById('matchDetails');
             if (matchDetailsElement) {
@@ -501,9 +518,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const aiInsightsElement = document.getElementById('aiInsights');
             if (aiInsightsElement) {
                 let insightsHTML = '';
-                data.insights.forEach(insight => {
-                    insightsHTML += `<div class="insight-item"><i class="fas fa-exclamation-triangle text-warning me-2"></i>${insight}</div>`;
-                });
+                if (data.insights && data.insights.length > 0) {
+                    data.insights.forEach(insight => {
+                        insightsHTML += `<div class="insight-item"><i class="fas fa-exclamation-triangle text-warning me-2"></i>${insight}</div>`;
+                    });
+                } else {
+                    insightsHTML = '<div class="insight-item"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Resume analysis encountered issues.</div>' +
+                                  '<div class="insight-item"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Try using a different file format or a text-based version.</div>';
+                }
                 aiInsightsElement.innerHTML = insightsHTML;
             }
             
