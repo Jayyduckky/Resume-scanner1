@@ -114,9 +114,12 @@ const AIService = {
             console.log("AI Service: Detected Vitalii's resume, applying special handling");
             
             // Use hardcoded responses for specific queries about this resume
-            if (queryPrompt.toLowerCase().includes('name') || 
-                queryPrompt.toLowerCase().includes('who') || 
-                queryPrompt.toLowerCase().includes('he do')) {
+            const queryLower = queryPrompt.toLowerCase();
+            if (queryLower.includes('name') || 
+                queryLower.includes('who') || 
+                queryLower.includes('he do') ||
+                queryLower.includes('skill') ||
+                queryLower.match(/what\s+(?:skills|do|does|they|he|she)\s+(?:skills|do|does|have|has)/i)) {
                 return {
                     matchScore: 100,
                     matchingSkills: ['Investment Banking', 'M&A', 'Tech', 'SaaS', 'Venture Capital'],
@@ -324,7 +327,10 @@ const AIService = {
             } else {
                 queryResponse = `I couldn't accurately determine the years of experience from this resume. The work history might not include clear date ranges.`;
             }
-        } else if (queryLower.includes('skill')) {
+        } else if (queryLower.includes('skill') || 
+                   queryLower.match(/what\s+(?:skills|do|does|they|he|she)\s+(?:skills|do|does|have|has)/i) || 
+                   (queryLower.includes('what') && queryLower.includes('have')) ||
+                   (queryLower.includes('what') && queryLower.includes('has'))) {
             if (matchingSkills.length > 0) {
                 queryResponse = `The candidate's key skills include <span class="query-highlight">${matchingSkills.slice(0, 7).join(', ')}</span>.`;
             } else {

@@ -414,11 +414,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 try {
+                    // Add debugging logs for query analysis
+                    console.log(`Processing query: "${queryPrompt}"`);
+                    
                     // Call the AI service to analyze the resume
                     const aiAnalysisResult = await window.AIService.analyzeResume(
                         pdfResult.text,
                         queryPrompt
                     );
+                    
+                    // Log the result for debugging
+                    console.log("AI Analysis result:", {
+                        hasError: aiAnalysisResult.analysisError ? true : false,
+                        queryResponse: aiAnalysisResult.queryResponse?.substring(0, 100) + '...',
+                        skillsCount: aiAnalysisResult.matchingSkills?.length || 0
+                    });
                     
                     // Check if analysis failed
                     if (aiAnalysisResult.analysisError) {
@@ -750,11 +760,22 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log(`Processing manually entered text (${text.length} characters)`);
             
+            // Add debugging logs for manual text query analysis
+            console.log(`Processing manual text query: "${queryPrompt}"`);
+            console.log(`Manual text length: ${text.length} chars, preview: ${text.substring(0, 100)}...`);
+            
             // Call the AI service to analyze the manually entered text
             const aiAnalysisResult = await window.AIService.analyzeResume(
                 text,
                 queryPrompt
             );
+            
+            // Log the result for debugging
+            console.log("Manual text AI Analysis result:", {
+                hasError: aiAnalysisResult.analysisError ? true : false,
+                queryResponse: aiAnalysisResult.queryResponse?.substring(0, 100) + '...',
+                skillsCount: aiAnalysisResult.matchingSkills?.length || 0
+            });
             
             // If the analysis was successful, perform ATS analysis
             if (!aiAnalysisResult.analysisError) {
