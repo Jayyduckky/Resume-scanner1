@@ -118,6 +118,59 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 500;
 }
 
+/* ATS Score Styles */
+.circle-score {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    margin: 10px auto;
+}
+
+#keywordScore {
+    background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+}
+
+#formattingScore {
+    background: linear-gradient(135deg, #4895ef 0%, #4361ee 100%);
+}
+
+#contactScore {
+    background: linear-gradient(135deg, #4cc9f0 0%, #4895ef 100%);
+}
+
+#atsScoreBadge {
+    font-size: 1.5rem;
+    padding: 8px 16px;
+}
+
+#atsImprovementTips .list-group-item {
+    border-left: none;
+    border-right: none;
+}
+
+#atsImprovementTips .list-group-item:first-child {
+    border-top: none;
+}
+
+#atsImprovementTips .list-group-item:last-child {
+    border-bottom: none;
+}
+
+.score-metric {
+    transition: transform 0.2s ease;
+}
+
+.score-metric:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
 /* History Table */
 .history-table th, 
 .history-table td {

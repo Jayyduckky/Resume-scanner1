@@ -3,6 +3,23 @@
 
 // Main AI Service object
 const AIService = {
+    // ATS keywords by industry/job category
+    atsKeywords: {
+        'software': ['javascript', 'python', 'java', 'react', 'node', 'api', 'agile', 'git', 'cloud', 'aws', 'azure', 'devops', 'frontend', 'backend', 'fullstack', 'database', 'sql', 'nosql', 'testing', 'ci/cd', 'docker', 'kubernetes'],
+        'marketing': ['seo', 'content', 'social media', 'analytics', 'campaign', 'brand', 'strategy', 'digital marketing', 'email marketing', 'conversion', 'growth', 'ctr', 'roi', 'copywriting', 'market research', 'customer acquisition'],
+        'finance': ['financial analysis', 'accounting', 'excel', 'budgeting', 'forecasting', 'reporting', 'variance analysis', 'financial modeling', 'compliance', 'risk management', 'audit', 'taxation', 'banking', 'investment', 'portfolio'],
+        'healthcare': ['patient care', 'clinical', 'medical', 'healthcare', 'diagnosis', 'treatment', 'therapy', 'nursing', 'patient management', 'electronic health records', 'hipaa', 'medical coding', 'regulations'],
+        'general': ['leadership', 'management', 'communication', 'problem solving', 'team player', 'detail oriented', 'project management', 'time management', 'critical thinking', 'organization']
+    },
+    
+    // ATS formatting issues to check for
+    atsFormattingIssues: [
+        {name: 'Complex Tables', regex: /<table|<td|<tr|<th/i, impact: 'high'},
+        {name: 'Text in Header/Footer', regex: /<header|<footer/i, impact: 'medium'},
+        {name: 'Complex Formatting', regex: /font-family|text-shadow|transform:/i, impact: 'medium'},
+        {name: 'Uncommon Bullets', regex: /[^\w\s\.,;:!?\-\(\)\/\\&@#$%^*+=[\]{}|<>"'`~_]/g, impact: 'low'},
+        {name: 'Excessive Whitespace', regex: /\n\s*\n\s*\n/g, impact: 'low'}
+    ],
     // API configuration
     apiKey: '', // You'll need to add your API key
     apiEndpoint: 'https://api.openai.com/v1/chat/completions',
@@ -342,6 +359,204 @@ const AIService = {
             queryResponse: queryResponse,
             insights: insights
         };
+    },
+    
+    // Analyze resume for ATS compatibility
+    analyzeATSCompatibility: function(resumeText, jobDescription = '') {
+        console.log('AI Service: Analyzing ATS compatibility');
+        
+        try {
+            // Detect industry based on keywords in resume
+            const detectedIndustry = this.detectIndustry(resumeText);
+            
+            // Get relevant keywords for the detected industry
+            const relevantKeywords = this.atsKeywords[detectedIndustry] || this.atsKeywords['general'];
+            
+            // Calculate keyword match score
+            const keywordMatches = this.countKeywordMatches(resumeText, relevantKeywords);
+            const keywordScore = Math.min(100, Math.round(keywordMatches / relevantKeywords.length * 100));
+            
+            // Check for formatting issues
+            const formattingIssues = this.detectFormattingIssues(resumeText);
+            
+            // Calculate formatting score (100 - penalties)
+            let formattingScore = 100;
+            formattingIssues.forEach(issue => {
+                if (issue.impact === 'high') formattingScore -= 20;
+                else if (issue.impact === 'medium') formattingScore -= 10;
+                else formattingScore -= 5;
+            });
+            formattingScore = Math.max(0, formattingScore);
+            
+            // Check for contact info completeness
+            const contactInfoScore = this.checkContactInfoCompleteness(resumeText);
+            
+            // Calculate overall ATS score
+            const atsScore = Math.round((keywordScore * 0.5) + (formattingScore * 0.3) + (contactInfoScore * 0.2));
+            
+            // Generate improvement tips
+            const improvementTips = this.generateATSImprovementTips(keywordScore, formattingIssues, contactInfoScore, detectedIndustry);
+            
+            return {
+                atsScore: atsScore,
+                keywordScore: keywordScore,
+                formattingScore: formattingScore,
+                contactInfoScore: contactInfoScore,
+                detectedIndustry: detectedIndustry,
+                keywordMatches: keywordMatches,
+                formattingIssues: formattingIssues,
+                improvementTips: improvementTips
+            };
+        } catch (error) {
+            console.error('Error in ATS analysis:', error);
+            return {
+                atsScore: 50,
+                keywordScore: 50,
+                formattingScore: 50,
+                contactInfoScore: 50,
+                detectedIndustry: 'general',
+                keywordMatches: 0,
+                formattingIssues: [],
+                improvementTips: ['Unable to complete ATS analysis. Please try again.']
+            };
+        }
+    },
+    
+    // Detect industry based on keywords in resume
+    detectIndustry: function(resumeText) {
+        const industries = Object.keys(this.atsKeywords);
+        let maxMatches = 0;
+        let detectedIndustry = 'general';
+        
+        industries.forEach(industry => {
+            if (industry === 'general') return; // Skip general category for detection
+            
+            const keywords = this.atsKeywords[industry];
+            const matches = this.countKeywordMatches(resumeText, keywords);
+            
+            if (matches > maxMatches) {
+                maxMatches = matches;
+                detectedIndustry = industry;
+            }
+        });
+        
+        return detectedIndustry;
+    },
+    
+    // Count keyword matches in text
+    countKeywordMatches: function(text, keywords) {
+        const lowerText = text.toLowerCase();
+        let matches = 0;
+        
+        keywords.forEach(keyword => {
+            // Use regex word boundary to find whole words
+            const regex = new RegExp('\\b' + keyword.toLowerCase() + '\\b', 'i');
+            if (regex.test(lowerText)) {
+                matches++;
+            }
+        });
+        
+        return matches;
+    },
+    
+    // Detect formatting issues
+    detectFormattingIssues: function(text) {
+        const issues = [];
+        
+        this.atsFormattingIssues.forEach(issue => {
+            if (issue.regex.test(text)) {
+                issues.push({
+                    name: issue.name,
+                    impact: issue.impact
+                });
+            }
+        });
+        
+        // Check for sections
+        const hasEducationSection = /education|academic|degree|university|college/i.test(text);
+        const hasExperienceSection = /experience|employment|work history|job history|professional background/i.test(text);
+        const hasSkillsSection = /\bskills\b|proficiencies|competencies|qualifications/i.test(text);
+        
+        if (!hasEducationSection) {
+            issues.push({
+                name: 'Missing Education Section',
+                impact: 'medium'
+            });
+        }
+        
+        if (!hasExperienceSection) {
+            issues.push({
+                name: 'Missing Experience Section',
+                impact: 'high'
+            });
+        }
+        
+        if (!hasSkillsSection) {
+            issues.push({
+                name: 'Missing Skills Section',
+                impact: 'medium'
+            });
+        }
+        
+        return issues;
+    },
+    
+    // Check contact info completeness
+    checkContactInfoCompleteness: function(text) {
+        let score = 0;
+        
+        // Check for name
+        const namePattern = /([A-Z][a-z]+\s+[A-Z][a-z]+)/;
+        if (namePattern.test(text)) score += 25;
+        
+        // Check for email
+        const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
+        if (emailRegex.test(text)) score += 25;
+        
+        // Check for phone
+        const phoneRegex = /(\+\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/;
+        if (phoneRegex.test(text)) score += 25;
+        
+        // Check for location/address
+        const locationRegex = /\b[A-Z][a-z]+(?:,)? [A-Z]{2}\b|\b[A-Z][a-z]+(,? [A-Z][a-z]+)?,? \d{5}\b/;
+        if (locationRegex.test(text)) score += 25;
+        
+        return score;
+    },
+    
+    // Generate ATS improvement tips
+    generateATSImprovementTips: function(keywordScore, formattingIssues, contactInfoScore, industry) {
+        const tips = [];
+        
+        // Keyword tips
+        if (keywordScore < 70) {
+            tips.push(`Include more industry-specific keywords for ${industry} roles.`);
+            tips.push('Match keywords from the job description in your resume.');
+            tips.push('Use both spelled-out terms and acronyms (e.g., "Artificial Intelligence (AI)").');
+        }
+        
+        // Formatting tips
+        if (formattingIssues.length > 0) {
+            const highImpactIssues = formattingIssues.filter(issue => issue.impact === 'high');
+            
+            if (highImpactIssues.length > 0) {
+                tips.push(`Fix critical formatting issues: ${highImpactIssues.map(i => i.name).join(', ')}.`);
+            }
+            
+            tips.push('Use simple formatting - avoid tables, headers, footers, and text boxes.');
+            tips.push('Use standard section headings (e.g., "Experience," "Education," "Skills").');
+        }
+        
+        // Contact info tips
+        if (contactInfoScore < 75) {
+            tips.push('Ensure your contact information is complete: name, email, phone, and location.');
+        }
+        
+        // General ATS tips
+        tips.push('Use a clean, single-column layout for best ATS compatibility.');
+        tips.push('Submit your resume as a .docx or .pdf file with selectable text.');
+        
+        return tips;
     },
     
     // Fallback response in case of errors

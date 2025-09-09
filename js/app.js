@@ -338,13 +338,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         queryPrompt
                     );
                     
+                    // Perform ATS compatibility analysis
+                    const atsAnalysisResult = await window.AIService.analyzeATSCompatibility(
+                        pdfResult.text
+                    );
+                    
                     // Create the complete result object
                     const resultData = {
                         fileName: fileName,
                         fileSize: fileSize,
                         timestamp: new Date().toISOString(),
                         queryPrompt: queryPrompt,
-                        ...aiAnalysisResult // Spread the AI analysis results
+                        ...aiAnalysisResult, // Spread the AI analysis results
+                        ats: atsAnalysisResult // Add ATS analysis results
                     };
                     
                     // Store current scan data
@@ -394,13 +400,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     queryPrompt
                 );
                 
+                // Perform ATS compatibility analysis
+                const atsAnalysisResult = await window.AIService.analyzeATSCompatibility(
+                    resumeText
+                );
+                
                 // Create the complete result object
                 const resultData = {
                     fileName: fileName,
                     fileSize: fileSize,
                     timestamp: new Date().toISOString(),
                     queryPrompt: queryPrompt,
-                    ...aiAnalysisResult // Spread the AI analysis results
+                    ...aiAnalysisResult, // Spread the AI analysis results
+                    ats: atsAnalysisResult // Add ATS analysis results
                 };
                 
                 // Store current scan data
@@ -433,6 +445,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show results section
         resultsSection.style.display = 'block';
         resultsSection.scrollIntoView({ behavior: 'smooth' });
+        
+        // Display ATS results if available
+        if (data.ats) {
+            displayATSResults(data.ats);
+        }
         
         // Display skills
         let matchDetailsHTML = '<h5>Skills Found in Resume</h5><div class="d-flex flex-wrap mb-3">';
@@ -471,6 +488,52 @@ document.addEventListener('DOMContentLoaded', function() {
                     No specific query was provided. Ask a question in the query prompt field for specific information.
                 </div>
             `;
+        }
+    }
+    
+    // Display ATS analysis results
+    function displayATSResults(atsData) {
+        // Get ATS display elements
+        const atsScoreBadge = document.getElementById('atsScoreBadge');
+        const atsScoreBar = document.getElementById('atsScoreBar');
+        const keywordScore = document.getElementById('keywordScore');
+        const formattingScore = document.getElementById('formattingScore');
+        const contactScore = document.getElementById('contactScore');
+        const atsImprovementTips = document.getElementById('atsImprovementTips');
+        
+        // Update ATS score
+        if (atsScoreBadge) atsScoreBadge.textContent = atsData.atsScore;
+        
+        // Update progress bar
+        if (atsScoreBar) {
+            atsScoreBar.style.width = `${atsData.atsScore}%`;
+            atsScoreBar.textContent = `${atsData.atsScore}%`;
+            atsScoreBar.setAttribute('aria-valuenow', atsData.atsScore);
+            
+            // Change progress bar color based on score
+            if (atsData.atsScore >= 80) {
+                atsScoreBar.className = 'progress-bar bg-success';
+            } else if (atsData.atsScore >= 60) {
+                atsScoreBar.className = 'progress-bar bg-info';
+            } else if (atsData.atsScore >= 40) {
+                atsScoreBar.className = 'progress-bar bg-warning';
+            } else {
+                atsScoreBar.className = 'progress-bar bg-danger';
+            }
+        }
+        
+        // Update component scores
+        if (keywordScore) keywordScore.textContent = atsData.keywordScore;
+        if (formattingScore) formattingScore.textContent = atsData.formattingScore;
+        if (contactScore) contactScore.textContent = atsData.contactInfoScore;
+        
+        // Display improvement tips
+        if (atsImprovementTips && atsData.improvementTips) {
+            let tipsHTML = '';
+            atsData.improvementTips.forEach(tip => {
+                tipsHTML += `<li class="list-group-item"><i class="fas fa-check-circle text-primary me-2"></i>${tip}</li>`;
+            });
+            atsImprovementTips.innerHTML = tipsHTML;
         }
     }
     
