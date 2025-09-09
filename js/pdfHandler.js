@@ -155,27 +155,109 @@ const PDFHandler = {
                 }
             }
             
-            // Check if we extracted meaningful text - reduce minimum text length
-            // For selectable PDFs, we should be able to extract at least some text
+            // Check if we extracted meaningful text
             if (fullText.trim().length < 10) {
-                console.warn('PDFHandler: Extracted text is extremely short or empty');
+                console.warn('PDFHandler: Extracted text is extremely short or empty - attempting direct document extraction');
                 
-                // Add debug information about the PDF
-                const debugInfo = {
-                    pdfVersionInfo: pdfDocument._pdfInfo,
-                    numPages: pdfDocument.numPages,
-                    metadata: await pdfDocument.getMetadata().catch(e => "Metadata extraction failed"),
-                    extractedChars: fullText.length
-                };
-                
-                console.log('PDFHandler Debug Info:', debugInfo);
-                
-                return {
-                    success: false,
-                    text: '',
-                    error: 'Failed to extract text from PDF. The document might be image-based or using custom fonts.',
-                    debugInfo: debugInfo
-                };
+                // Try a final, direct document-level extraction method
+                try {
+                    console.log('PDFHandler: Attempting direct document text extraction');
+                    
+                    // Get raw text content directly from the document
+                    let rawText = '';
+                    
+                    // Method 1: Try to get text using getAllTextContent (new in PDF.js 3.x)
+                    try {
+                        if (typeof pdfDocument.getAllTextContent === 'function') {
+                            const allTextContent = await pdfDocument.getAllTextContent();
+                            if (allTextContent && Array.isArray(allTextContent)) {
+                                rawText = allTextContent.map(content => 
+                                    content.items.map(item => item.str).join(' ')
+                                ).join('\n\n');
+                                
+                                console.log(`PDFHandler: Raw document text extracted (${rawText.length} chars)`);
+                            }
+                        }
+                    } catch (rawTextError) {
+                        console.error('PDFHandler: getAllTextContent method failed:', rawTextError);
+                    }
+                    
+                    // Method 2: Try to access document content directly
+                    if (!rawText || rawText.trim().length < 10) {
+                        try {
+                            if (pdfDocument._transport && pdfDocument._transport._pdfInfo) {
+                                const pdfInfo = pdfDocument._transport._pdfInfo;
+                                console.log('PDFHandler: PDF structure information:', pdfInfo);
+                            }
+                            
+                            // Attempt to get document-level properties that might contain text
+                            const metadata = await pdfDocument.getMetadata().catch(() => ({}));
+                            if (metadata && metadata.info) {
+                                const metaText = Object.values(metadata.info).join(' ');
+                                console.log(`PDFHandler: Metadata text length: ${metaText.length}`);
+                                
+                                if (metaText.length > rawText.length) {
+                                    rawText = metaText + ' ' + rawText;
+                                }
+                            }
+                        } catch (docAccessError) {
+                            console.error('PDFHandler: Direct document access failed:', docAccessError);
+                        }
+                    }
+                    
+                    // If we got some raw text through our special methods, use it
+                    if (rawText && rawText.trim().length > fullText.trim().length) {
+                        console.log(`PDFHandler: Using raw document text (${rawText.length} chars) instead of page-based extraction (${fullText.length} chars)`);
+                        fullText = rawText;
+                    }
+                    
+                    // If we still don't have enough text
+                    if (fullText.trim().length < 10) {
+                        // Add debug information about the PDF
+                        const debugInfo = {
+                            pdfVersionInfo: pdfDocument._pdfInfo,
+                            numPages: pdfDocument.numPages,
+                            metadata: await pdfDocument.getMetadata().catch(e => "Metadata extraction failed"),
+                            extractedChars: fullText.length,
+                            extractionMethods: {
+                                pageByPage: true,
+                                directDocument: true,
+                                getAllTextContent: typeof pdfDocument.getAllTextContent === 'function',
+                                metadataExtraction: true
+                            }
+                        };
+                        
+                        console.log('PDFHandler Debug Info:', debugInfo);
+                        
+                        return {
+                            success: false,
+                            text: '',
+                            error: 'Failed to extract text from PDF even with multiple methods. The document might be image-based, secured, or using non-standard fonts.',
+                            debugInfo: debugInfo,
+                            isSelectable: false // We couldn't extract text despite trying everything
+                        };
+                    }
+                } catch (directExtractionError) {
+                    console.error('PDFHandler: Direct document extraction failed:', directExtractionError);
+                    
+                    // Add debug information about the PDF
+                    const debugInfo = {
+                        pdfVersionInfo: pdfDocument._pdfInfo,
+                        numPages: pdfDocument.numPages,
+                        metadata: await pdfDocument.getMetadata().catch(e => "Metadata extraction failed"),
+                        extractedChars: fullText.length,
+                        directExtractionError: directExtractionError.toString()
+                    };
+                    
+                    console.log('PDFHandler Debug Info:', debugInfo);
+                    
+                    return {
+                        success: false,
+                        text: '',
+                        error: 'Failed to extract text from PDF. The document might be image-based or using custom fonts.',
+                        debugInfo: debugInfo
+                    };
+                }
             }
             
             // Debug output to console - helpful for diagnosing issues

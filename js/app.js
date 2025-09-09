@@ -338,6 +338,39 @@ document.addEventListener('DOMContentLoaded', function() {
                         <li>If you're certain your PDF has selectable text, try opening it in a different PDF reader and copying all the text to a plain text file</li>
                     </ol>`;
                     
+                    // Add manual text input option for PDFs with selectable text
+                    const manualPdfTextArea = document.createElement('textarea');
+                    manualPdfTextArea.id = 'manualPdfTextInput';
+                    manualPdfTextArea.className = 'form-control mt-3';
+                    manualPdfTextArea.rows = 6;
+                    manualPdfTextArea.placeholder = 'If your PDF has selectable text, open it in a PDF viewer, select all text (Ctrl+A), copy it (Ctrl+C), and paste it here (Ctrl+V). Then click "Try with Pasted Text".';
+                    
+                    const manualPdfSubmitBtn = document.createElement('button');
+                    manualPdfSubmitBtn.id = 'manualPdfSubmitBtn';
+                    manualPdfSubmitBtn.className = 'btn btn-warning mt-2';
+                    manualPdfSubmitBtn.innerHTML = 'Try with Pasted Text';
+                    
+                    // Container for manual input UI
+                    const manualTextContainer = document.createElement('div');
+                    manualTextContainer.id = 'manualPdfTextContainer';
+                    manualTextContainer.className = 'border rounded p-3 mt-3 bg-light';
+                    manualTextContainer.innerHTML = '<h5><i class="fas fa-paste me-2"></i>Alternative: Manual Text Entry</h5>' +
+                        '<p class="small text-muted">If you know your PDF has selectable text but our system cannot extract it:</p>';
+                    
+                    manualTextContainer.appendChild(manualPdfTextArea);
+                    manualTextContainer.appendChild(manualPdfSubmitBtn);
+                    
+                    // Set up manual text submission handler
+                    manualPdfSubmitBtn.addEventListener('click', function() {
+                        const manualText = manualPdfTextArea.value.trim();
+                        if (manualText.length > 20) {
+                            // Process the manually entered text
+                            processManualText(manualText, queryPrompt, fileName);
+                        } else {
+                            alert('Please paste more text from your PDF (at least 20 characters).');
+                        }
+                    });
+                    
                     // Create the error result
                     const errorResult = {
                         fileName: fileName,
@@ -353,7 +386,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         yearsOfExperience: 0,
                         queryResponse: errorMessage,
                         insights: insights,
-                        analysisError: true
+                        analysisError: true,
+                        manualTextContainer: manualTextContainer // Add the manual text container to the result
                     };
                     
                     // Show the error
@@ -542,10 +576,29 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Display query result error message
             if (queryResultElement) {
-                queryResultElement.innerHTML = `
+                let errorHtml = `
                     <div class="alert alert-warning">
                         <strong>Query:</strong> ${data.queryPrompt}<br><br>
                         <strong>Response:</strong> <span class="text-danger">Analysis Problem</span><br>
+                `;
+                
+                // If the user provided manual text that failed, show a different message
+                if (data.manualTextUsed) {
+                    errorHtml += `
+                        <p>I couldn't properly analyze the manually entered text. This might be due to:</p>
+                        <ul>
+                            <li>Insufficient text content</li>
+                            <li>Formatting issues in the pasted text</li>
+                            <li>Text not containing recognizable resume content</li>
+                        </ul>
+                        <p>Please try copying the complete text from your resume and make sure it includes your experience, skills and education sections.</p>
+                    `;
+                } else if (data.queryResponse) {
+                    // If there's a specific error message, use it
+                    errorHtml += data.queryResponse;
+                } else {
+                    // Default error message
+                    errorHtml += `
                         <p>I couldn't properly analyze this resume. This might be due to:</p>
                         <ul>
                             <li>The file format (try using .docx or .txt format)</li>
@@ -553,14 +606,23 @@ document.addEventListener('DOMContentLoaded', function() {
                             <li>The resume might have unusual formatting</li>
                         </ul>
                         <p>Please try uploading a different version of your resume.</p>
-                    </div>
-                `;
+                    `;
+                }
+                
+                errorHtml += `</div>`;
+                queryResultElement.innerHTML = errorHtml;
+                
+                // If we have a manual text input container and it's not already a manual text result
+                if (data.manualTextContainer && !data.manualTextUsed) {
+                    // Append the manual text input UI to the query result section
+                    queryResultElement.appendChild(data.manualTextContainer);
+                }
             }
             
             // Make sure other sections are visible for error display
             const matchDetailsElement = document.getElementById('matchDetails');
             if (matchDetailsElement) {
-                matchDetailsElement.innerHTML = '<p class="text-muted">Analysis failed. Please upload a different file format.</p>';
+                matchDetailsElement.innerHTML = '<p class="text-muted">Analysis failed. Please upload a different file format or try the manual text entry option above.</p>';
             }
             
             const aiInsightsElement = document.getElementById('aiInsights');
@@ -673,6 +735,72 @@ document.addEventListener('DOMContentLoaded', function() {
                 tipsHTML += `<li class="list-group-item"><i class="fas fa-check-circle text-primary me-2"></i>${tip}</li>`;
             });
             atsImprovementTips.innerHTML = tipsHTML;
+        }
+    }
+    
+    // Process manually entered text
+    async function processManualText(text, queryPrompt, originalFileName) {
+        try {
+            // Show processing state
+            const submitBtn = document.getElementById('manualPdfSubmitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+            }
+            
+            console.log(`Processing manually entered text (${text.length} characters)`);
+            
+            // Call the AI service to analyze the manually entered text
+            const aiAnalysisResult = await window.AIService.analyzeResume(
+                text,
+                queryPrompt
+            );
+            
+            // If the analysis was successful, perform ATS analysis
+            if (!aiAnalysisResult.analysisError) {
+                // Perform ATS compatibility analysis
+                const atsAnalysisResult = await window.AIService.analyzeATSCompatibility(
+                    text
+                );
+                
+                // Create the complete result object
+                const resultData = {
+                    fileName: originalFileName + " (Manual Text)",
+                    fileSize: text.length,
+                    timestamp: new Date().toISOString(),
+                    queryPrompt: queryPrompt,
+                    ...aiAnalysisResult,
+                    ats: atsAnalysisResult,
+                    manualTextUsed: true
+                };
+                
+                // Store current scan data
+                currentScanData = resultData;
+                
+                // Display results
+                displayResults(resultData);
+            } else {
+                // If analysis failed, display the error
+                displayResults({
+                    ...aiAnalysisResult,
+                    fileName: originalFileName + " (Manual Text)",
+                    fileSize: text.length,
+                    timestamp: new Date().toISOString(),
+                    queryPrompt: queryPrompt,
+                    manualTextUsed: true,
+                    analysisError: true
+                });
+            }
+        } catch (error) {
+            console.error('Error processing manual text:', error);
+            alert('There was an error processing your text. Please try again.');
+        } finally {
+            // Reset button state
+            const submitBtn = document.getElementById('manualPdfSubmitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Try with Pasted Text';
+            }
         }
     }
     
