@@ -77,19 +77,39 @@
                         <div class="card-body">
                             <form id="scanForm">
                                 <div class="mb-3">
-                                    <label for="resumeFile" class="form-label">Upload Resume (PDF, DOCX)</label>
-                                    <input class="form-control" type="file" id="resumeFile" accept=".pdf,.docx,.doc,.txt">
-                                    <div class="form-text">For best results with PDF files, ensure the text is selectable (not scanned images).</div>
+                                    <label for="resumeFiles" class="form-label">Upload Resumes (PDF, DOCX)</label>
+                                    <input class="form-control" type="file" id="resumeFiles" accept=".pdf,.docx,.doc,.txt" multiple>
+                                    <div class="form-text">Select multiple files to scan and compare. For best results with PDF files, ensure the text is selectable (not scanned images).</div>
                                 </div>
                                 
                                 <div class="mb-3">
-                                    <label for="queryPrompt" class="form-label">Query Prompt</label>
-                                    <input type="text" class="form-control" id="queryPrompt" placeholder="E.g. 'What is the candidate's name?' or 'List all skills'" required>
-                                    <div class="form-text">Ask specific questions about the resume like "What's their name?", "What skills do they have?", etc.</div>
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <label for="filesList" class="form-label mb-0">Selected Files</label>
+                                        <span class="badge bg-primary" id="filesCount">0</span>
+                                    </div>
+                                    <div class="list-group" id="filesList" style="max-height: 150px; overflow-y: auto;">
+                                        <div class="list-group-item text-muted">No files selected</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="queryPrompt" class="form-label">Analysis Prompt</label>
+                                    <input type="text" class="form-control" id="queryPrompt" placeholder="E.g. 'Find candidates with JavaScript skills' or 'Which candidate has the most experience in marketing?'" required>
+                                    <div class="form-text">Enter a prompt to analyze and compare multiple resumes. Ask about specific skills, experience, or qualifications to find the best matches.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enableCorrelationAnalysis" checked>
+                                        <label class="form-check-label" for="enableCorrelationAnalysis">
+                                            Enable correlation analysis between files
+                                        </label>
+                                    </div>
+                                    <div class="form-text">When enabled, the system will analyze similarities, differences, and correlations between all uploaded files.</div>
                                 </div>
                                 
                                 <button type="submit" class="btn btn-primary" id="scanButton">
-                                    <i class="fas fa-search me-1"></i> Scan Resume
+                                    <i class="fas fa-search me-1"></i> Scan Resumes
                                 </button>
                                 <div class="text-muted small mt-2">Free users: 3 scans per day. <a href="pricing.html">Upgrade to PRO</a> for unlimited scans.</div>
                             </form>
@@ -103,7 +123,42 @@
     <!-- Results Section -->
     <section id="results" class="py-5 bg-light" style="display: none;">
         <div class="container">
-            <h2 class="text-center mb-4">Resume Analysis Results</h2>
+            <h2 class="text-center mb-4">Multi-Resume Analysis Results</h2>
+            
+            <!-- File Selection Tabs -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Analyzed Files</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-pills" id="resultsFileTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="summary-tab" data-bs-toggle="pill" data-bs-target="#summary-content" type="button" role="tab" aria-selected="true">
+                                <i class="fas fa-chart-pie me-1"></i> Summary
+                            </button>
+                        </li>
+                        <!-- Additional file tabs will be added dynamically -->
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="resultsFileContent">
+                <!-- Summary Tab Content -->
+                <div class="tab-pane fade show active" id="summary-content" role="tabpanel" aria-labelledby="summary-tab">
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">Correlation Analysis</h4>
+                        </div>
+                        <div class="card-body">
+                            <div id="correlationResult">
+                                <!-- Correlation results will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Individual file results tabs will be added dynamically -->
+            </div>
             
             <div class="card mt-4 mb-4">
                 <div class="card-header bg-primary text-white">
@@ -425,6 +480,7 @@
     <!-- Improved PDF handling -->
     <script src="js/pdfHandler.js"></script>
     <script src="js/aiService.js"></script>
+    <script src="js/multiScan.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

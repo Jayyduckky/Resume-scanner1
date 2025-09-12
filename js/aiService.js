@@ -24,7 +24,7 @@ const AIService = {
     apiKey: '', // You'll need to add your API key
     apiEndpoint: 'https://api.openai.com/v1/chat/completions',
     
-    // Analyze a resume with a query
+    // Analyze a single resume with a query
     analyzeResume: async function(resumeText, queryPrompt) {
         try {
             // Prepare the prompt for the AI
@@ -39,6 +39,294 @@ const AIService = {
             console.error('AI Analysis Error:', error);
             return this.getFallbackResponse(resumeText);
         }
+    },
+    
+    // Analyze multiple resumes with a query and correlate the results
+    analyzeMultipleResumes: async function(resumeFiles, queryPrompt, enableCorrelation = true) {
+        try {
+            console.log('AI Service: Analyzing multiple resumes:', resumeFiles.length);
+            
+            // Array to store individual analysis results
+            const individualResults = [];
+            const resumeTexts = [];
+            
+            // Process each resume file
+            for (let i = 0; i < resumeFiles.length; i++) {
+                const file = resumeFiles[i];
+                console.log('AI Service: Processing file', i + 1, '/', resumeFiles.length, file.name);
+                
+                // Extract text from file (assuming this functionality exists)
+                let resumeText = '';
+                if (window.PdfHandler && file.type === 'application/pdf') {
+                    resumeText = await window.PdfHandler.extractTextFromPdf(file);
+                } else {
+                    // For non-PDF files, use a text reader or appropriate method
+                    const reader = new FileReader();
+                    resumeText = await new Promise((resolve) => {
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.readAsText(file);
+                    });
+                }
+                
+                resumeTexts.push({
+                    fileName: file.name,
+                    text: resumeText
+                });
+                
+                // Analyze individual resume
+                const result = await this.analyzeResume(resumeText, queryPrompt);
+                result.fileName = file.name; // Add filename to track the source
+                individualResults.push(result);
+            }
+            
+            // If correlation is enabled and we have multiple resumes, perform correlation analysis
+            let correlationAnalysis = null;
+            if (enableCorrelation && resumeFiles.length > 1) {
+                correlationAnalysis = await this.correlateResumes(resumeTexts, individualResults, queryPrompt);
+            }
+            
+            return {
+                individualResults: individualResults,
+                correlationAnalysis: correlationAnalysis,
+                queryPrompt: queryPrompt,
+                fileCount: resumeFiles.length
+            };
+        } catch (error) {
+            console.error('Multiple Resume Analysis Error:', error);
+            return {
+                error: 'Error analyzing multiple resumes',
+                message: error.message,
+                individualResults: [],
+                correlationAnalysis: null,
+                queryPrompt: queryPrompt,
+                fileCount: resumeFiles.length
+            };
+        }
+    },
+    
+    // Correlate multiple resumes based on query prompt
+    correlateResumes: async function(resumeTexts, individualResults, queryPrompt) {
+        console.log('AI Service: Performing correlation analysis on', resumeTexts.length, 'resumes');
+        
+        try {
+            // Extract key information from all resumes
+            const candidates = individualResults.map((result, index) => {
+                return {
+                    fileName: result.fileName,
+                    name: result.candidateName,
+                    skills: result.matchingSkills,
+                    experience: result.yearsOfExperience,
+                    email: result.candidateEmail,
+                    index: index
+                };
+            });
+            
+            // Find best matches for the query
+            const bestMatches = this.findBestMatches(candidates, queryPrompt);
+            
+            // Find common skills across all resumes
+            const commonSkills = this.findCommonSkills(individualResults);
+            
+            // Find unique skills for each resume
+            const uniqueSkills = this.findUniqueSkills(individualResults);
+            
+            // Calculate experience distribution
+            const experienceDistribution = this.calculateExperienceDistribution(individualResults);
+            
+            // Generate insights based on the correlation
+            const insights = this.generateCorrelationInsights(candidates, bestMatches, commonSkills, uniqueSkills, queryPrompt);
+            
+            return {
+                bestMatches: bestMatches,
+                commonSkills: commonSkills,
+                uniqueSkills: uniqueSkills,
+                experienceDistribution: experienceDistribution,
+                insights: insights,
+                candidateCount: candidates.length
+            };
+        } catch (error) {
+            console.error('Correlation Analysis Error:', error);
+            return {
+                error: 'Error performing correlation analysis',
+                message: error.message,
+                bestMatches: [],
+                commonSkills: [],
+                uniqueSkills: {},
+                insights: ["Unable to complete correlation analysis due to an error."]
+            };
+        }
+    },
+    
+    // Find best matches for a query among candidates
+    findBestMatches: function(candidates, queryPrompt) {
+        // Simple keyword matching for demo purposes
+        // In a real implementation, this would use more sophisticated matching algorithms
+        
+        // Extract keywords from the query
+        const queryLower = queryPrompt.toLowerCase();
+        const keywords = queryLower.split(/\s+/).filter(word => word.length > 3);
+        
+        // Score each candidate based on keyword matches
+        const scoredCandidates = candidates.map(candidate => {
+            let score = 0;
+            
+            // Check skills match
+            keywords.forEach(keyword => {
+                candidate.skills.forEach(skill => {
+                    if (skill.toLowerCase().includes(keyword)) {
+                        score += 10;
+                    }
+                });
+                
+                // Check name match (lower priority)
+                if (candidate.name.toLowerCase().includes(keyword)) {
+                    score += 2;
+                }
+                
+                // Check experience relevance
+                if (queryLower.includes('experience') && candidate.experience > 3) {
+                    score += candidate.experience;
+                }
+                
+                if (queryLower.includes('senior') && candidate.experience > 5) {
+                    score += 10;
+                }
+                
+                if (queryLower.includes('junior') && candidate.experience <= 3) {
+                    score += 10;
+                }
+            });
+            
+            return {
+                ...candidate,
+                score: score
+            };
+        });
+        
+        // Sort by score
+        return scoredCandidates
+            .sort((a, b) => b.score - a.score)
+            .map(candidate => ({
+                fileName: candidate.fileName,
+                name: candidate.name,
+                score: candidate.score,
+                relevance: this.calculateRelevanceLabel(candidate.score),
+                index: candidate.index
+            }));
+    },
+    
+    // Calculate a relevance label based on score
+    calculateRelevanceLabel: function(score) {
+        if (score > 30) return 'Excellent match';
+        if (score > 20) return 'Good match';
+        if (score > 10) return 'Moderate match';
+        if (score > 0) return 'Low match';
+        return 'No match';
+    },
+    
+    // Find common skills across all resumes
+    findCommonSkills: function(individualResults) {
+        if (individualResults.length === 0) return [];
+        
+        // Start with all skills from the first resume
+        let commonSkills = [...individualResults[0].matchingSkills];
+        
+        // Filter to keep only skills that appear in all resumes
+        for (let i = 1; i < individualResults.length; i++) {
+            const currentSkills = individualResults[i].matchingSkills;
+            commonSkills = commonSkills.filter(skill => 
+                currentSkills.some(s => s.toLowerCase() === skill.toLowerCase())
+            );
+        }
+        
+        return commonSkills;
+    },
+    
+    // Find unique skills for each resume
+    findUniqueSkills: function(individualResults) {
+        const uniqueSkills = {};
+        
+        // Process each resume
+        individualResults.forEach(result => {
+            const fileName = result.fileName;
+            const skills = result.matchingSkills;
+            
+            // Find skills unique to this resume
+            const otherResumes = individualResults.filter(r => r.fileName !== fileName);
+            const uniqueToThisResume = skills.filter(skill => 
+                !otherResumes.some(r => 
+                    r.matchingSkills.some(s => s.toLowerCase() === skill.toLowerCase())
+                )
+            );
+            
+            uniqueSkills[fileName] = uniqueToThisResume;
+        });
+        
+        return uniqueSkills;
+    },
+    
+    // Calculate experience distribution
+    calculateExperienceDistribution: function(individualResults) {
+        const distribution = {
+            'Junior (0-2 years)': 0,
+            'Mid-level (3-5 years)': 0,
+            'Senior (6+ years)': 0
+        };
+        
+        individualResults.forEach(result => {
+            const years = result.yearsOfExperience || 0;
+            
+            if (years <= 2) {
+                distribution['Junior (0-2 years)']++;
+            } else if (years <= 5) {
+                distribution['Mid-level (3-5 years)']++;
+            } else {
+                distribution['Senior (6+ years)']++;
+            }
+        });
+        
+        return distribution;
+    },
+    
+    // Generate insights based on correlation analysis
+    generateCorrelationInsights: function(candidates, bestMatches, commonSkills, uniqueSkills, queryPrompt) {
+        const insights = [];
+        
+        // Add insight about the query
+        insights.push(`Analysis based on query: "${queryPrompt}"`);
+        
+        // Add insight about total candidates
+        insights.push(`Total candidates analyzed: ${candidates.length}`);
+        
+        // Add insight about best match
+        if (bestMatches.length > 0 && bestMatches[0].score > 0) {
+            insights.push(`Best match: ${bestMatches[0].name} (${bestMatches[0].fileName}) - ${bestMatches[0].relevance}`);
+        }
+        
+        // Add insight about common skills
+        if (commonSkills.length > 0) {
+            insights.push(`${commonSkills.length} common skills across all candidates: ${commonSkills.slice(0, 5).join(', ')}${commonSkills.length > 5 ? '...' : ''}`);
+        } else {
+            insights.push('No common skills found across all candidates.');
+        }
+        
+        // Add insight about candidate with most unique skills
+        let maxUniqueSkills = 0;
+        let candidateWithMostUniqueSkills = null;
+        
+        Object.keys(uniqueSkills).forEach(fileName => {
+            if (uniqueSkills[fileName].length > maxUniqueSkills) {
+                maxUniqueSkills = uniqueSkills[fileName].length;
+                candidateWithMostUniqueSkills = fileName;
+            }
+        });
+        
+        if (candidateWithMostUniqueSkills && maxUniqueSkills > 0) {
+            const candidate = candidates.find(c => c.fileName === candidateWithMostUniqueSkills);
+            insights.push(`${candidate ? candidate.name : candidateWithMostUniqueSkills} has the most unique skills (${maxUniqueSkills}): ${uniqueSkills[candidateWithMostUniqueSkills].slice(0, 3).join(', ')}${maxUniqueSkills > 3 ? '...' : ''}`);
+        }
+        
+        return insights;
     },
     
     // Prepare the prompt for AI
