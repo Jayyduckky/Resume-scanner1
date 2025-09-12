@@ -611,8 +611,7 @@ const AIService = {
             // Add error flag to indicate analysis failure
             analysisError: true
         };
-    }
-};
+    },
 
     // Resume Template Generator
     generateResumeTemplate: async function(industry, jobTitle, yearsOfExperience) {
