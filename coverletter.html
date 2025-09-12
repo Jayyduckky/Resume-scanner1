@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cover Letter Generator | Resume Scanner</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .cover-letter-preview {
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            padding: 30px;
+            margin-top: 20px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        
+        .cover-letter-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .cover-letter-date {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        
+        .cover-letter-body {
+            margin-bottom: 30px;
+        }
+        
+        .cover-letter-closing {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .cover-letter-signature {
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="fas fa-file-search me-2"></i>Resume Scanner</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="editor.html">Resume Editor</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="coverletter.html">Cover Letter</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Career Tools
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="toolsDropdown">
+                            <li><a class="dropdown-item" href="interview.html">Interview Prep</a></li>
+                            <li><a class="dropdown-item" href="linkedin.html">LinkedIn Optimizer</a></li>
+                            <li><a class="dropdown-item" href="career-paths.html">Career Paths</a></li>
+                            <li><a class="dropdown-item" href="skill-gap.html">Skill Gap Analysis</a></li>
+                            <li><a class="dropdown-item" href="networking.html">Networking Suggestions</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="history.html">History</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="pricing.html">Pricing</a>
+                    </li>
+                    <li class="nav-item" id="adminNavItem" style="display: none;">
+                        <a class="nav-link" href="admin.html">Admin</a>
+                    </li>
+                </ul>
+                <div class="ms-2 d-flex align-items-center">
+                    <a href="login.html" class="btn btn-outline-light btn-sm" id="userLoginBtn">
+                        <i class="fas fa-user me-1"></i> <span id="loginBtnText">Login</span>
+                    </a>
+                    <span id="proStatusBadge" class="ms-2 badge bg-warning" style="display: none;">PRO</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Section -->
+    <header class="bg-light py-3">
+        <div class="container">
+            <h1 class="mb-0">Cover Letter Generator</h1>
+            <p class="lead">Create professional cover letters tailored to specific job descriptions</p>
+        </div>
+    </header>
+
+    <!-- Generator Section -->
+    <section class="py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4">
+                    <div class="card shadow mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">Generate Cover Letter</h4>
+                        </div>
+                        <div class="card-body">
+                            <form id="coverLetterForm">
+                                <div class="mb-3">
+                                    <label for="resumeFile" class="form-label">Upload Resume</label>
+                                    <input class="form-control" type="file" id="resumeFile" accept=".pdf,.docx,.doc,.txt">
+                                    <div class="form-text">We'll use your resume to extract relevant information.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="jobDescription" class="form-label">Job Description</label>
+                                    <textarea class="form-control" id="jobDescription" rows="5" placeholder="Paste the job description here..."></textarea>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="candidateName" class="form-label">Your Full Name</label>
+                                    <input type="text" class="form-control" id="candidateName" placeholder="John Doe">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="companyName" class="form-label">Company Name</label>
+                                    <input type="text" class="form-control" id="companyName" placeholder="ABC Corporation">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="coverLetterStyle" class="form-label">Cover Letter Style</label>
+                                    <select class="form-select" id="coverLetterStyle">
+                                        <option value="professional">Professional (Standard)</option>
+                                        <option value="creative">Creative</option>
+                                        <option value="enthusiastic">Enthusiastic</option>
+                                        <option value="formal">Formal</option>
+                                    </select>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary w-100" id="generateButton">
+                                    <i class="fas fa-magic me-1"></i> Generate Cover Letter
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">Tips & Best Practices</h4>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Keep your cover letter to one page
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Address a specific person when possible
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Highlight relevant experience and skills
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Customize each cover letter for the specific job
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Proofread for grammar and spelling errors
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-8">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0">Cover Letter Preview</h4>
+                            <div>
+                                <button id="editCoverLetterBtn" class="btn btn-light btn-sm">
+                                    <i class="fas fa-edit me-1"></i> Edit
+                                </button>
+                                <button id="downloadCoverLetterBtn" class="btn btn-light btn-sm ms-2">
+                                    <i class="fas fa-download me-1"></i> Download
+                                </button>
+                                <button id="saveCoverLetterBtn" class="btn btn-light btn-sm ms-2">
+                                    <i class="fas fa-save me-1"></i> Save
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="coverLetterPreview" class="cover-letter-preview">
+                                <div class="text-center mb-4">
+                                    <h5>Your Cover Letter Will Appear Here</h5>
+                                    <p class="text-muted">Fill out the form and click "Generate Cover Letter" to create your customized cover letter.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Templates Section -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <h2>Cover Letter Templates</h2>
+            <p class="lead">Choose from our professional cover letter templates</p>
+            
+            <div class="row mt-4">
+                <div class="col-md-3 mb-4">
+                    <div class="card template-card">
+                        <img src="https://placehold.co/300x400/e9ecef/6c757d?text=Template+1" class="card-img-top" alt="Template 1">
+                        <div class="card-body">
+                            <h5 class="card-title">Professional</h5>
+                            <p class="card-text">Standard professional cover letter for most job applications.</p>
+                            <button class="btn btn-primary btn-sm apply-template" data-template="professional">Apply Template</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card template-card">
+                        <img src="https://placehold.co/300x400/e9ecef/6c757d?text=Template+2" class="card-img-top" alt="Template 2">
+                        <div class="card-body">
+                            <h5 class="card-title">Creative</h5>
+                            <p class="card-text">For creative fields where showing personality is important.</p>
+                            <button class="btn btn-primary btn-sm apply-template" data-template="creative">Apply Template</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card template-card">
+                        <img src="https://placehold.co/300x400/e9ecef/6c757d?text=Template+3" class="card-img-top" alt="Template 3">
+                        <div class="card-body">
+                            <h5 class="card-title">Enthusiastic</h5>
+                            <p class="card-text">Energetic tone for startups and growing companies.</p>
+                            <button class="btn btn-primary btn-sm apply-template" data-template="enthusiastic">Apply Template</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card template-card">
+                        <img src="https://placehold.co/300x400/e9ecef/6c757d?text=Template+4" class="card-img-top" alt="Template 4">
+                        <div class="card-body">
+                            <h5 class="card-title">Formal</h5>
+                            <p class="card-text">Traditional formatting for corporate and conservative industries.</p>
+                            <button class="btn btn-primary btn-sm apply-template" data-template="formal">Apply Template</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-4 bg-dark text-white">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-file-search me-2"></i>Resume Scanner</h5>
+                    <p>Smart resume analysis powered by artificial intelligence.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="index.html" class="text-white">Home</a></li>
+                        <li><a href="editor.html" class="text-white">Resume Editor</a></li>
+                        <li><a href="coverletter.html" class="text-white">Cover Letter</a></li>
+                        <li><a href="history.html" class="text-white">History</a></li>
+                        <li><a href="pricing.html" class="text-white">Pricing</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Contact</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="mailto:support@resumescanner.com" class="text-white">support@resumescanner.com</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="mt-4">
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <p class="mb-0">&copy; 2023 Resume Scanner. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/aiService.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js"></script>
+    <script src="js/pdfHandler.js"></script>
+    <script>
+        // Document ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle form submission
+            document.getElementById('coverLetterForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                generateCoverLetter();
+            });
+            
+            // Handle download button
+            document.getElementById('downloadCoverLetterBtn').addEventListener('click', function() {
+                downloadCoverLetter();
+            });
+            
+            // Handle edit button
+            document.getElementById('editCoverLetterBtn').addEventListener('click', function() {
+                makeCoverLetterEditable();
+            });
+            
+            // Handle save button
+            document.getElementById('saveCoverLetterBtn').addEventListener('click', function() {
+                saveCoverLetter();
+            });
+            
+            // Handle template buttons
+            document.querySelectorAll('.apply-template').forEach(button => {
+                button.addEventListener('click', function() {
+                    const templateName = this.getAttribute('data-template');
+                    document.getElementById('coverLetterStyle').value = templateName;
+                    alert(`Template "${templateName}" selected. Generate your cover letter to apply it.`);
+                });
+            });
+        });
+        
+        // Generate cover letter function
+        async function generateCoverLetter() {
+            // Show loading state
+            const generateButton = document.getElementById('generateButton');
+            generateButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
+            generateButton.disabled = true;
+            
+            try {
+                // Get form values
+                const resumeFile = document.getElementById('resumeFile').files[0];
+                const jobDescription = document.getElementById('jobDescription').value;
+                const candidateName = document.getElementById('candidateName').value;
+                const companyName = document.getElementById('companyName').value;
+                const coverLetterStyle = document.getElementById('coverLetterStyle').value;
+                
+                if (!jobDescription || !companyName) {
+                    alert('Please provide a job description and company name.');
+                    return;
+                }
+                
+                let resumeText = '';
+                
+                // If resume file provided, extract text
+                if (resumeFile) {
+                    // Use PDF handler if available, otherwise just use placeholder
+                    if (window.PdfHandler) {
+                        resumeText = await PdfHandler.extractTextFromPdf(resumeFile);
+                    } else {
+                        resumeText = 'Sample resume text for demonstration purposes.';
+                    }
+                } else {
+                    resumeText = 'Sample resume text for demonstration purposes.';
+                }
+                
+                // Use AI Service to generate cover letter
+                if (window.AIService) {
+                    const coverLetter = await AIService.generateCoverLetter(
+                        resumeText, 
+                        jobDescription, 
+                        candidateName, 
+                        companyName
+                    );
+                    
+                    // Render the cover letter
+                    renderCoverLetter(coverLetter, coverLetterStyle);
+                } else {
+                    // Fallback if AIService is not available
+                    renderFallbackCoverLetter(candidateName, companyName);
+                }
+            } catch (error) {
+                console.error('Error generating cover letter:', error);
+                alert('Error generating cover letter. Please try again.');
+            } finally {
+                // Reset button state
+                generateButton.innerHTML = '<i class="fas fa-magic me-1"></i> Generate Cover Letter';
+                generateButton.disabled = false;
+            }
+        }
+        
+        // Render the cover letter with given style
+        function renderCoverLetter(coverLetter, style) {
+            const preview = document.getElementById('coverLetterPreview');
+            
+            // Format based on style
+            let formattedContent = '';
+            
+            switch (style) {
+                case 'professional':
+                    formattedContent = `
+                        <div class="cover-letter-header">
+                            <h3>${coverLetter.header.candidateName}</h3>
+                            <p>${coverLetter.header.candidateEmail} | ${coverLetter.header.candidatePhone}</p>
+                        </div>
+                        
+                        <div class="cover-letter-date">
+                            <p>${coverLetter.header.date}</p>
+                        </div>
+                        
+                        <div class="cover-letter-body">
+                            <p>${coverLetter.greeting}</p>
+                            
+                            <p>${coverLetter.introduction}</p>
+                            
+                            <p>${coverLetter.body[0]}</p>
+                            
+                            <p>${coverLetter.body[1]}</p>
+                            
+                            <p>${coverLetter.body[2]}</p>
+                            
+                            <p>${coverLetter.conclusion}</p>
+                        </div>
+                        
+                        <div class="cover-letter-closing">
+                            <p>${coverLetter.closing}</p>
+                            <div class="cover-letter-signature">
+                                <p>${coverLetter.signature}</p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'creative':
+                    formattedContent = `
+                        <div class="cover-letter-header" style="text-align: left; border-bottom: 2px solid #6c757d;">
+                            <h2 style="color: #0d6efd;">${coverLetter.header.candidateName}</h2>
+                            <p>${coverLetter.header.candidateEmail} | ${coverLetter.header.candidatePhone}</p>
+                        </div>
+                        
+                        <div class="cover-letter-date">
+                            <p>${coverLetter.header.date}</p>
+                        </div>
+                        
+                        <div class="cover-letter-body">
+                            <p style="font-size: 18px; font-weight: 500;">${coverLetter.greeting}</p>
+                            
+                            <p style="font-style: italic;">${coverLetter.introduction}</p>
+                            
+                            <p>${coverLetter.body[0]}</p>
+                            
+                            <p>${coverLetter.body[1]}</p>
+                            
+                            <p>${coverLetter.body[2]}</p>
+                            
+                            <p>${coverLetter.conclusion}</p>
+                        </div>
+                        
+                        <div class="cover-letter-closing">
+                            <p>${coverLetter.closing}</p>
+                            <div class="cover-letter-signature" style="border-top: 1px solid #dee2e6; padding-top: 10px;">
+                                <p style="font-weight: 600;">${coverLetter.signature}</p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'enthusiastic':
+                    formattedContent = `
+                        <div class="cover-letter-header" style="text-align: center;">
+                            <h2 style="color: #0d6efd; text-transform: uppercase;">${coverLetter.header.candidateName}</h2>
+                            <p>${coverLetter.header.candidateEmail} | ${coverLetter.header.candidatePhone}</p>
+                        </div>
+                        
+                        <div class="cover-letter-date">
+                            <p>${coverLetter.header.date}</p>
+                        </div>
+                        
+                        <div class="cover-letter-body">
+                            <p style="font-size: 18px; font-weight: 500;">${coverLetter.greeting}</p>
+                            
+                            <p style="font-weight: 500;">${coverLetter.introduction}</p>
+                            
+                            <p>${coverLetter.body[0]}</p>
+                            
+                            <p>${coverLetter.body[1]}</p>
+                            
+                            <p>${coverLetter.body[2]}</p>
+                            
+                            <p style="font-weight: 500;">${coverLetter.conclusion}</p>
+                        </div>
+                        
+                        <div class="cover-letter-closing">
+                            <p>${coverLetter.closing}</p>
+                            <div class="cover-letter-signature">
+                                <p style="font-weight: 600; color: #0d6efd;">${coverLetter.signature}</p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'formal':
+                    formattedContent = `
+                        <div class="cover-letter-header" style="text-align: left;">
+                            <p>${coverLetter.header.candidateName}<br>
+                            ${coverLetter.header.candidateEmail}<br>
+                            ${coverLetter.header.candidatePhone}</p>
+                        </div>
+                        
+                        <div class="cover-letter-date">
+                            <p>${coverLetter.header.date}</p>
+                        </div>
+                        
+                        <div class="cover-letter-body">
+                            <p>${coverLetter.greeting}</p>
+                            
+                            <p>Re: Application for Position</p>
+                            
+                            <p>${coverLetter.introduction}</p>
+                            
+                            <p>${coverLetter.body[0]}</p>
+                            
+                            <p>${coverLetter.body[1]}</p>
+                            
+                            <p>${coverLetter.body[2]}</p>
+                            
+                            <p>${coverLetter.conclusion}</p>
+                        </div>
+                        
+                        <div class="cover-letter-closing">
+                            <p>${coverLetter.closing}</p>
+                            <div class="cover-letter-signature">
+                                <p>${coverLetter.signature}</p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                
+                default:
+                    // Default to professional
+                    formattedContent = `
+                        <div class="cover-letter-header">
+                            <h3>${coverLetter.header.candidateName}</h3>
+                            <p>${coverLetter.header.candidateEmail} | ${coverLetter.header.candidatePhone}</p>
+                        </div>
+                        
+                        <div class="cover-letter-date">
+                            <p>${coverLetter.header.date}</p>
+                        </div>
+                        
+                        <div class="cover-letter-body">
+                            <p>${coverLetter.greeting}</p>
+                            
+                            <p>${coverLetter.introduction}</p>
+                            
+                            <p>${coverLetter.body[0]}</p>
+                            
+                            <p>${coverLetter.body[1]}</p>
+                            
+                            <p>${coverLetter.body[2]}</p>
+                            
+                            <p>${coverLetter.conclusion}</p>
+                        </div>
+                        
+                        <div class="cover-letter-closing">
+                            <p>${coverLetter.closing}</p>
+                            <div class="cover-letter-signature">
+                                <p>${coverLetter.signature}</p>
+                            </div>
+                        </div>
+                    `;
+            }
+            
+            // Set content
+            preview.innerHTML = formattedContent;
+        }
+        
+        // Fallback cover letter when AIService is not available
+        function renderFallbackCoverLetter(candidateName, companyName) {
+            const preview = document.getElementById('coverLetterPreview');
+            const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            const formattedContent = `
+                <div class="cover-letter-header">
+                    <h3>${candidateName || 'Your Name'}</h3>
+                    <p>your.email@example.com | (123) 456-7890</p>
+                </div>
+                
+                <div class="cover-letter-date">
+                    <p>${today}</p>
+                </div>
+                
+                <div class="cover-letter-body">
+                    <p>Dear ${companyName} Hiring Team,</p>
+                    
+                    <p>I am writing to express my interest in the position at ${companyName}. With my background in relevant skills, I am confident in my ability to make significant contributions to your team.</p>
+                    
+                    <p>Throughout my professional experience, I have developed expertise in key areas which aligns well with your requirements. My experience aligns perfectly with your requirements.</p>
+                    
+                    <p>I've successfully implemented effective strategies in previous roles. In my previous roles, I have demonstrated strong capabilities in problem-solving and delivering results.</p>
+                    
+                    <p>I am particularly drawn to ${companyName} because of your reputation for innovation and excellence. My background would allow me to hit the ground running.</p>
+                    
+                    <p>Thank you for considering my application. I look forward to the opportunity to discuss how my skills and experiences align with your needs. Please feel free to contact me at your.email@example.com or (123) 456-7890 to arrange a conversation.</p>
+                </div>
+                
+                <div class="cover-letter-closing">
+                    <p>Sincerely,</p>
+                    <div class="cover-letter-signature">
+                        <p>${candidateName || 'Your Name'}</p>
+                    </div>
+                </div>
+            `;
+            
+            preview.innerHTML = formattedContent;
+        }
+        
+        // Make cover letter editable
+        function makeCoverLetterEditable() {
+            const preview = document.getElementById('coverLetterPreview');
+            preview.setAttribute('contenteditable', 'true');
+            preview.classList.add('border', 'border-primary');
+            preview.focus();
+            
+            // Change the edit button
+            const editButton = document.getElementById('editCoverLetterBtn');
+            editButton.innerHTML = '<i class="fas fa-check me-1"></i> Done';
+            editButton.addEventListener('click', function() {
+                preview.setAttribute('contenteditable', 'false');
+                preview.classList.remove('border', 'border-primary');
+                
+                // Reset the button
+                editButton.innerHTML = '<i class="fas fa-edit me-1"></i> Edit';
+            }, { once: true });
+        }
+        
+        // Download cover letter
+        function downloadCoverLetter() {
+            const preview = document.getElementById('coverLetterPreview');
+            const content = preview.innerHTML;
+            
+            const style = `
+                <style>
+                    .cover-letter-header { text-align: center; margin-bottom: 20px; }
+                    .cover-letter-date { text-align: right; margin-bottom: 20px; }
+                    .cover-letter-body { margin-bottom: 30px; }
+                    .cover-letter-closing { margin-top: 20px; margin-bottom: 20px; }
+                    .cover-letter-signature { margin-top: 40px; }
+                    body { font-family: Arial, sans-serif; padding: 30px; }
+                </style>
+            `;
+            
+            const html = `<!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Cover Letter</title>
+                    ${style}
+                </head>
+                <body>
+                    ${content}
+                </body>
+                </html>
+            `;
+            
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'cover_letter.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // Save cover letter
+        function saveCoverLetter() {
+            const preview = document.getElementById('coverLetterPreview');
+            const content = preview.innerHTML;
+            
+            // In a real application, this would save to a database or localStorage
+            localStorage.setItem('savedCoverLetter', content);
+            
+            alert('Cover letter saved successfully!');
+        }
+    </script>
+</body>
+</html>

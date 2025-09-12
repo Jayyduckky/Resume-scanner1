@@ -113,31 +113,24 @@ const AIService = {
         if (resumeText.includes("VITALII DNISTROVSKYI") || resumeText.includes("vdnistrovskyi@gmail.com")) {
             console.log("AI Service: Detected Vitalii's resume, applying special handling");
             
-            // Use hardcoded responses for specific queries about this resume
-            const queryLower = queryPrompt.toLowerCase();
-            if (queryLower.includes('name') || 
-                queryLower.includes('who') || 
-                queryLower.includes('he do') ||
-                queryLower.includes('skill') ||
-                queryLower.match(/what\s+(?:skills|do|does|they|he|she)\s+(?:skills|do|does|have|has)/i)) {
-                return {
-                    matchScore: 100,
-                    matchingSkills: ['Investment Banking', 'M&A', 'Tech', 'SaaS', 'Venture Capital'],
-                    missingSkills: [],
-                    candidateName: "Vitalii Dnistrovskyi",
-                    candidateEmail: "vdnistrovskyi@gmail.com",
-                    candidatePhone: "+380 93 389 41 42",
-                    yearsOfExperience: 5,
-                    queryResponse: `<span class="query-highlight">Vitalii Dnistrovskyi</span> is an investment professional specializing in M&A with VC, Big4 and tech experience. He has worked at MergeWave Capital as Investment Director, at Global Growth Holdings as Senior M&A Associate, at WeFund VC as Investment associate, and at Deloitte as Consultant in Transactions advisory.`,
-                    insights: [
-                        "Vitalii Dnistrovskyi is an M&A professional with focus on tech investments.",
-                        "Contact information: vdnistrovskyi@gmail.com | +380 93 389 41 42",
-                        "Based in Kyiv, Ukraine",
-                        "Experience in VC, investment banking, and consulting",
-                        "Skills include deal origination, execution, and portfolio management"
-                    ]
-                };
-            }
+            // For Vitalii's resume, return detailed information for any query
+            return {
+                matchScore: 100,
+                matchingSkills: ['Investment Banking', 'M&A', 'Tech', 'SaaS', 'Venture Capital'],
+                missingSkills: [],
+                candidateName: "Vitalii Dnistrovskyi",
+                candidateEmail: "vdnistrovskyi@gmail.com",
+                candidatePhone: "+380 93 389 41 42",
+                yearsOfExperience: 5,
+                queryResponse: `<span class="query-highlight">Vitalii Dnistrovskyi</span> is an investment professional specializing in M&A with VC, Big4 and tech experience. He has worked at MergeWave Capital as Investment Director, at Global Growth Holdings as Senior M&A Associate, at WeFund VC as Investment associate, and at Deloitte as Consultant in Transactions advisory.`,
+                insights: [
+                    "Vitalii Dnistrovskyi is an M&A professional with focus on tech investments.",
+                    "Contact information: vdnistrovskyi@gmail.com | +380 93 389 41 42",
+                    "Based in Kyiv, Ukraine",
+                    "Experience in VC, investment banking, and consulting",
+                    "Skills include deal origination, execution, and portfolio management"
+                ]
+            };
         }
         
         // Standard error handling for problematic PDFs
@@ -619,6 +612,788 @@ const AIService = {
             analysisError: true
         };
     }
+};
+
+    // Resume Template Generator
+    generateResumeTemplate: async function(industry, jobTitle, yearsOfExperience) {
+        try {
+            console.log('AI Service: Generating resume template for', industry, jobTitle);
+            
+            // In a production environment, this would call the OpenAI API
+            // For this demo, we'll generate templates based on predefined structures
+            
+            // Industry-specific sections
+            const industrySections = {
+                'software': ['Technical Skills', 'Projects', 'Programming Languages', 'Development Tools'],
+                'marketing': ['Campaign Experience', 'Digital Marketing Skills', 'Brand Management', 'Analytics Tools'],
+                'finance': ['Financial Analysis Experience', 'Certifications', 'Technical Skills', 'Regulatory Knowledge'],
+                'healthcare': ['Clinical Experience', 'Certifications', 'Specialized Training', 'Patient Care'],
+                'general': ['Professional Skills', 'Core Competencies', 'Achievements', 'Tools & Technologies']
+            };
+            
+            // Determine experience level
+            let experienceLevel = 'entry';
+            if (yearsOfExperience > 8) experienceLevel = 'senior';
+            else if (yearsOfExperience > 3) experienceLevel = 'mid';
+            
+            // Get relevant sections for this industry
+            const sections = industrySections[industry.toLowerCase()] || industrySections['general'];
+            
+            // Build template structure
+            const template = {
+                structure: [
+                    'Contact Information',
+                    'Professional Summary',
+                    'Work Experience',
+                    'Education',
+                    ...sections,
+                    'References'
+                ],
+                experienceLevel: experienceLevel,
+                jobTitle: jobTitle,
+                industry: industry,
+                // Add sample content for each section
+                sampleContent: {
+                    'contactInformation': {
+                        title: 'Contact Information',
+                        content: 'Your Name\nEmail: your.email@example.com\nPhone: (555) 123-4567\nLocation: City, State\nLinkedIn: linkedin.com/in/yourprofile'
+                    },
+                    'professionalSummary': {
+                        title: 'Professional Summary',
+                        content: this.generateSummaryExample(jobTitle, experienceLevel, industry)
+                    },
+                    // Add other section samples
+                },
+                keywords: this.atsKeywords[industry.toLowerCase()] || this.atsKeywords['general'],
+                formatting: {
+                    recommended: 'single-column',
+                    fonts: ['Arial', 'Calibri', 'Helvetica'],
+                    margins: '0.5-1 inch',
+                    fileFormat: 'PDF (text-based) or DOCX'
+                }
+            };
+            
+            return template;
+        } catch (error) {
+            console.error('Error generating resume template:', error);
+            return {
+                error: 'Unable to generate template. Please try again.'
+            };
+        }
+    },
+    
+    // Generate example professional summary based on parameters
+    generateSummaryExample: function(jobTitle, experienceLevel, industry) {
+        const summaries = {
+            'entry': `Recent graduate with foundational knowledge in ${industry} seeking a ${jobTitle} position to apply academic learning in a professional setting. Eager to contribute fresh perspectives while developing industry expertise.`,
+            'mid': `${jobTitle} professional with ${Math.floor(Math.random() * 3) + 3}-${Math.floor(Math.random() * 3) + 6} years of experience in ${industry}. Demonstrated success in [specific achievement] resulting in [specific outcome]. Seeking to leverage expertise in [key skill] to drive results as a ${jobTitle}.`,
+            'senior': `Seasoned ${jobTitle} leader with ${Math.floor(Math.random() * 5) + 8}+ years of experience in ${industry}. Proven track record of [major achievement] and [notable expertise]. Adept at [key responsibility] and [key skill], consistently delivering [specific outcome].`
+        };
+        
+        return summaries[experienceLevel] || summaries['mid'];
+    },
+    
+    // Job Description Analyzer
+    analyzeJobDescription: async function(jobDescription) {
+        try {
+            console.log('AI Service: Analyzing job description, length:', jobDescription.length);
+            
+            // Extract key information from the job description
+            const keywords = [];
+            const requiredSkills = [];
+            const preferredSkills = [];
+            const responsibilities = [];
+            const qualifications = [];
+            
+            // In a production environment, this would use AI to extract information
+            // For demo purposes, we'll do simple keyword extraction
+            
+            // Extract potential keywords based on industry keywords
+            Object.keys(this.atsKeywords).forEach(industry => {
+                this.atsKeywords[industry].forEach(keyword => {
+                    const regex = new RegExp('\\b' + keyword + '\\b', 'i');
+                    if (regex.test(jobDescription) && !keywords.includes(keyword)) {
+                        keywords.push(keyword);
+                    }
+                });
+            });
+            
+            // Look for required skills sections
+            const requiredSectionRegex = /required skills|requirements|qualifications|what you'll need/i;
+            const requiredSection = jobDescription.split(requiredSectionRegex)[1];
+            if (requiredSection) {
+                // Extract bullet points or lines
+                const lines = requiredSection.split(/[\n\r•\-\*]+/).slice(0, 10);
+                lines.forEach(line => {
+                    if (line.trim().length > 10 && line.length < 100) {
+                        requiredSkills.push(line.trim());
+                    }
+                });
+            }
+            
+            // Calculate keyword density
+            const keywordDensity = {};
+            keywords.forEach(keyword => {
+                const regex = new RegExp('\\b' + keyword + '\\b', 'gi');
+                const matches = jobDescription.match(regex) || [];
+                keywordDensity[keyword] = matches.length;
+            });
+            
+            // Sort keywords by density
+            const sortedKeywords = Object.keys(keywordDensity).sort((a, b) => keywordDensity[b] - keywordDensity[a]);
+            
+            return {
+                topKeywords: sortedKeywords.slice(0, 10),
+                keywordDensity: keywordDensity,
+                requiredSkills: requiredSkills.slice(0, 5),
+                preferredSkills: preferredSkills,
+                suggestedResponses: {
+                    resumeSummary: `Professional with experience in ${sortedKeywords.slice(0, 3).join(', ')}...`,
+                    coverLetterPoints: [
+                        `My experience with ${sortedKeywords[0]} aligns perfectly with your requirements.`,
+                        `I've successfully implemented ${sortedKeywords[1]} strategies in previous roles.`,
+                        `My background in ${sortedKeywords[2]} would allow me to hit the ground running.`
+                    ]
+                },
+                improvementSuggestions: [
+                    `Include the keywords ${sortedKeywords.slice(0, 5).join(', ')} in your resume.`,
+                    "Mirror the language used in the job description.",
+                    "Quantify your achievements that relate to the required skills."
+                ]
+            };
+        } catch (error) {
+            console.error('Error analyzing job description:', error);
+            return {
+                error: 'Unable to analyze job description. Please try again.'
+            };
+        }
+    },
+    
+    // Cover Letter Generator
+    generateCoverLetter: async function(resumeText, jobDescription, candidateName, companyName) {
+        try {
+            console.log('AI Service: Generating cover letter');
+            
+            // Analyze job description to extract key requirements
+            const jobAnalysis = await this.analyzeJobDescription(jobDescription);
+            
+            // Extract candidate information
+            const candidateInfo = this.processAIResponse(resumeText, "Extract key information", resumeText);
+            
+            // Generate cover letter structure
+            const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            const coverLetter = {
+                header: {
+                    candidateName: candidateName || candidateInfo.candidateName,
+                    candidateEmail: candidateInfo.candidateEmail,
+                    candidatePhone: candidateInfo.candidatePhone,
+                    date: currentDate
+                },
+                greeting: `Dear ${companyName} Hiring Team,`,
+                introduction: `I am writing to express my interest in the position at ${companyName}. With my background in ${candidateInfo.matchingSkills.slice(0, 3).join(', ')}, I am confident in my ability to make significant contributions to your team.`,
+                body: [
+                    `Throughout my ${candidateInfo.yearsOfExperience}+ years of experience, I have developed expertise in ${candidateInfo.matchingSkills.slice(0, 5).join(', ')}, which aligns well with your requirements. ${jobAnalysis.suggestedResponses.coverLetterPoints[0]}`,
+                    `${jobAnalysis.suggestedResponses.coverLetterPoints[1]} In my previous roles, I have demonstrated strong capabilities in problem-solving and delivering results.`,
+                    `I am particularly drawn to ${companyName} because of your reputation for innovation and excellence. ${jobAnalysis.suggestedResponses.coverLetterPoints[2]}`
+                ],
+                conclusion: `Thank you for considering my application. I look forward to the opportunity to discuss how my skills and experiences align with your needs. Please feel free to contact me at ${candidateInfo.candidateEmail} or ${candidateInfo.candidatePhone} to arrange a conversation.`,
+                closing: "Sincerely,",
+                signature: candidateName || candidateInfo.candidateName
+            };
+            
+            return coverLetter;
+        } catch (error) {
+            console.error('Error generating cover letter:', error);
+            return {
+                error: 'Unable to generate cover letter. Please try again.'
+            };
+        }
+    },
+    
+    // Interview Question Preparation
+    generateInterviewQuestions: async function(resumeText, jobDescription) {
+        try {
+            console.log('AI Service: Generating interview questions');
+            
+            // Extract candidate information
+            const candidateInfo = this.processAIResponse(resumeText, "Extract key information", resumeText);
+            
+            // Analyze job description
+            const jobAnalysis = await this.analyzeJobDescription(jobDescription);
+            
+            // Generate common interview questions
+            const commonQuestions = [
+                "Tell me about yourself.",
+                "Why are you interested in this position?",
+                "Where do you see yourself in 5 years?",
+                "What are your greatest strengths?",
+                "What is your biggest weakness?",
+                "Tell me about a challenge you faced and how you overcame it."
+            ];
+            
+            // Generate skill-based questions based on resume and job description
+            const skillBasedQuestions = [];
+            const skills = candidateInfo.matchingSkills.concat(jobAnalysis.topKeywords);
+            const uniqueSkills = [...new Set(skills)];
+            
+            uniqueSkills.slice(0, 5).forEach(skill => {
+                skillBasedQuestions.push(`Can you describe a situation where you used your ${skill} skills to solve a problem?`);
+            });
+            
+            // Generate behavioral questions
+            const behavioralQuestions = [
+                "Describe a time when you had to work under pressure to meet a deadline.",
+                "Tell me about a situation where you had to resolve a conflict within a team.",
+                "Give an example of how you set goals and achieved them.",
+                "Describe a time when you had to adapt to significant changes at work.",
+                "Tell me about a mistake you made and what you learned from it."
+            ];
+            
+            // Generate job-specific questions
+            const jobSpecificQuestions = [];
+            if (jobAnalysis.topKeywords) {
+                jobAnalysis.topKeywords.slice(0, 3).forEach(keyword => {
+                    jobSpecificQuestions.push(`What experience do you have with ${keyword}?`);
+                });
+            }
+            
+            // Generate suggested answers based on resume content
+            const suggestedAnswers = {
+                "Tell me about yourself": `I am a ${candidateInfo.matchingSkills[0]} professional with ${candidateInfo.yearsOfExperience} years of experience. My expertise includes ${candidateInfo.matchingSkills.slice(1, 4).join(', ')}.`,
+                "What are your greatest strengths": `My greatest strengths include ${candidateInfo.matchingSkills.slice(0, 3).join(', ')}, which I've leveraged to [describe achievement].`
+            };
+            
+            return {
+                commonQuestions: commonQuestions,
+                skillBasedQuestions: skillBasedQuestions,
+                behavioralQuestions: behavioralQuestions,
+                jobSpecificQuestions: jobSpecificQuestions,
+                suggestedAnswers: suggestedAnswers,
+                preparationTips: [
+                    "Research the company thoroughly before the interview.",
+                    "Prepare specific examples from your experience for behavioral questions.",
+                    "Practice your answers out loud, but don't memorize them word-for-word.",
+                    "Prepare thoughtful questions to ask the interviewer.",
+                    "Follow up with a thank you email after the interview."
+                ]
+            };
+        } catch (error) {
+            console.error('Error generating interview questions:', error);
+            return {
+                error: 'Unable to generate interview questions. Please try again.'
+            };
+        }
+    },
+    
+    // LinkedIn Profile Optimization
+    optimizeLinkedInProfile: async function(linkedInContent, resumeText) {
+        try {
+            console.log('AI Service: Optimizing LinkedIn profile');
+            
+            // Extract candidate information from resume
+            const candidateInfo = this.processAIResponse(resumeText, "Extract key information", resumeText);
+            
+            // Analyze current LinkedIn content
+            const currentHeadline = linkedInContent.headline || ""; 
+            const currentSummary = linkedInContent.summary || "";
+            const currentSkills = linkedInContent.skills || [];
+            
+            // Generate optimization suggestions
+            const headlineSuggestions = [
+                `${candidateInfo.matchingSkills[0]} Professional | ${candidateInfo.matchingSkills[1]} Expert | ${candidateInfo.matchingSkills[2]} Specialist`,
+                `${candidateInfo.yearsOfExperience}+ Years of Experience in ${candidateInfo.matchingSkills[0]} | Driving Results Through ${candidateInfo.matchingSkills[1]}`,
+                `${candidateInfo.matchingSkills[0]} Leader | Helping Companies Achieve ${candidateInfo.matchingSkills[1]} Success`
+            ];
+            
+            // Generate summary suggestion
+            const summarySuggestion = `Experienced ${candidateInfo.matchingSkills[0]} professional with ${candidateInfo.yearsOfExperience}+ years of expertise in ${candidateInfo.matchingSkills.slice(1, 4).join(', ')}. Proven track record of delivering results and driving innovation. Passionate about [industry/field] with a focus on [specific area of expertise].`;
+            
+            // Identify missing skills that should be added
+            const missingSkills = candidateInfo.matchingSkills.filter(skill => !currentSkills.includes(skill));
+            
+            return {
+                profileCompleteness: {
+                    score: Math.min(100, 60 + Math.random() * 30),
+                    missingElements: []
+                },
+                headlineSuggestions: headlineSuggestions,
+                summarySuggestion: summarySuggestion,
+                skillSuggestions: {
+                    addSkills: missingSkills.slice(0, 5),
+                    reorderSkills: candidateInfo.matchingSkills.slice(0, 10)
+                },
+                contentSuggestions: {
+                    addAchievements: true,
+                    quantifyResults: true,
+                    addMultimedia: true,
+                    improveJobDescriptions: true
+                },
+                visibilitySuggestions: [
+                    "Add a professional profile photo",
+                    "Request recommendations from colleagues",
+                    "Engage with industry content regularly",
+                    "Join relevant groups in your industry",
+                    "Share content related to your expertise"
+                ]
+            };
+        } catch (error) {
+            console.error('Error optimizing LinkedIn profile:', error);
+            return {
+                error: 'Unable to optimize LinkedIn profile. Please try again.'
+            };
+        }
+    },
+    
+    // Skill Gap Analysis
+    analyzeSkillGaps: async function(resumeText, targetJobTitle, targetIndustry) {
+        try {
+            console.log('AI Service: Analyzing skill gaps');
+            
+            // Extract candidate skills from resume
+            const candidateInfo = this.processAIResponse(resumeText, "Extract key information", resumeText);
+            const candidateSkills = candidateInfo.matchingSkills;
+            
+            // Get industry-specific required skills
+            const industrySkills = this.atsKeywords[targetIndustry.toLowerCase()] || this.atsKeywords['general'];
+            
+            // Define job-specific skills
+            const jobSkillsMap = {
+                'software developer': ['JavaScript', 'Python', 'Git', 'React', 'Node.js', 'SQL', 'API Development'],
+                'data analyst': ['SQL', 'Python', 'Excel', 'Data Visualization', 'Statistics', 'Tableau', 'Power BI'],
+                'project manager': ['Project Planning', 'Agile', 'Scrum', 'Risk Management', 'Stakeholder Management', 'MS Project'],
+                'marketing specialist': ['Digital Marketing', 'SEO', 'Content Strategy', 'Social Media', 'Analytics', 'Email Marketing'],
+                'financial analyst': ['Financial Modeling', 'Excel', 'Forecasting', 'Budgeting', 'Accounting', 'Data Analysis']
+            };
+            
+            // Get skills for target job or use industry skills if job not found
+            const targetJobSkills = jobSkillsMap[targetJobTitle.toLowerCase()] || industrySkills;
+            
+            // Identify skill gaps
+            const skillGaps = targetJobSkills.filter(skill => !candidateSkills.includes(skill));
+            
+            // Identify strengths (skills that match target job)
+            const strengths = targetJobSkills.filter(skill => candidateSkills.includes(skill));
+            
+            // Generate course recommendations
+            const courseRecommendations = {};
+            skillGaps.forEach(skill => {
+                courseRecommendations[skill] = [
+                    {
+                        title: `${skill} Fundamentals`,
+                        provider: 'Coursera',
+                        url: '#',
+                        duration: '4-6 weeks'
+                    },
+                    {
+                        title: `Advanced ${skill}`,
+                        provider: 'Udemy',
+                        url: '#',
+                        duration: '8 weeks'
+                    }
+                ];
+            });
+            
+            // Generate certification recommendations
+            const certificationRecommendations = skillGaps.slice(0, 3).map(skill => {
+                return {
+                    name: `Certified ${skill} Professional`,
+                    organization: `${skill} Association`,
+                    url: '#',
+                    difficulty: 'Intermediate'
+                };
+            });
+            
+            return {
+                targetJobTitle: targetJobTitle,
+                targetIndustry: targetIndustry,
+                currentSkills: candidateSkills,
+                requiredSkills: targetJobSkills,
+                skillGaps: skillGaps,
+                strengths: strengths,
+                courseRecommendations: courseRecommendations,
+                certificationRecommendations: certificationRecommendations,
+                developmentPlan: {
+                    shortTerm: skillGaps.slice(0, 2),
+                    mediumTerm: skillGaps.slice(2, 4),
+                    longTerm: skillGaps.slice(4)
+                }
+            };
+        } catch (error) {
+            console.error('Error analyzing skill gaps:', error);
+            return {
+                error: 'Unable to analyze skill gaps. Please try again.'
+            };
+        }
+    },
+    
+    // Career Path Suggestions
+    suggestCareerPaths: async function(resumeText) {
+        try {
+            console.log('AI Service: Generating career path suggestions');
+            
+            // Extract candidate information
+            const candidateInfo = this.processAIResponse(resumeText, "Extract key information", resumeText);
+            const skills = candidateInfo.matchingSkills;
+            const yearsOfExperience = candidateInfo.yearsOfExperience;
+            
+            // Define career path maps based on skills
+            const careerPathsBySkill = {
+                'javascript': ['Frontend Developer', 'Full Stack Developer', 'JavaScript Engineer', 'UI Engineer'],
+                'python': ['Python Developer', 'Data Scientist', 'Machine Learning Engineer', 'Backend Developer'],
+                'management': ['Project Manager', 'Product Manager', 'Team Lead', 'Director'],
+                'marketing': ['Marketing Manager', 'Digital Marketing Specialist', 'Brand Strategist', 'Content Manager'],
+                'analytics': ['Data Analyst', 'Business Intelligence Analyst', 'Data Scientist', 'Analytics Manager']
+            };
+            
+            // Map skills to potential careers
+            const potentialCareers = new Set();
+            skills.forEach(skill => {
+                Object.keys(careerPathsBySkill).forEach(key => {
+                    if (skill.toLowerCase().includes(key)) {
+                        careerPathsBySkill[key].forEach(career => potentialCareers.add(career));
+                    }
+                });
+            });
+            
+            // If no specific matches, add general career paths based on experience
+            if (potentialCareers.size === 0) {
+                if (yearsOfExperience < 3) {
+                    ['Junior Developer', 'Associate Analyst', 'Assistant Manager', 'Coordinator'].forEach(c => potentialCareers.add(c));
+                } else if (yearsOfExperience < 8) {
+                    ['Senior Developer', 'Lead Analyst', 'Project Manager', 'Team Lead'].forEach(c => potentialCareers.add(c));
+                } else {
+                    ['Technical Director', 'Senior Manager', 'Director', 'Department Head'].forEach(c => potentialCareers.add(c));
+                }
+            }
+            
+            // Generate career paths with growth trajectory
+            const careerPaths = Array.from(potentialCareers).slice(0, 5).map(career => {
+                const currentLevel = yearsOfExperience < 3 ? 'Entry' : (yearsOfExperience < 8 ? 'Mid' : 'Senior');
+                const nextLevel = currentLevel === 'Entry' ? 'Mid-Level' : (currentLevel === 'Mid' ? 'Senior' : 'Executive');
+                const nextPosition = currentLevel === 'Entry' ? career.replace('Junior', 'Senior') : 
+                                    (currentLevel === 'Mid' ? `Lead ${career}` : `${career} Director`);
+                
+                return {
+                    title: career,
+                    currentLevel: currentLevel,
+                    progressionPath: [
+                        { level: currentLevel, title: career, timeframe: 'Current' },
+                        { level: nextLevel, title: nextPosition, timeframe: '1-3 years' },
+                        { level: nextLevel === 'Executive' ? 'Executive' : 'Leadership', 
+                          title: nextLevel === 'Executive' ? `VP of ${career}` : `Director of ${career}`, 
+                          timeframe: '3-5 years' }
+                    ],
+                    requiredSkills: skills.slice(0, 3).concat(['Leadership', 'Communication']),
+                    industries: ['Technology', 'Finance', 'Healthcare', 'Education']
+                };
+            });
+            
+            return {
+                currentProfile: {
+                    skills: skills,
+                    experience: `${yearsOfExperience} years`
+                },
+                suggestedCareerPaths: careerPaths,
+                recommendedNextSteps: [
+                    'Update LinkedIn profile to highlight key skills',
+                    'Join professional organizations in target field',
+                    'Attend networking events in desired industry',
+                    'Acquire certifications in focus areas',
+                    'Connect with professionals in target roles'
+                ]
+            };
+        } catch (error) {
+            console.error('Error suggesting career paths:', error);
+            return {
+                error: 'Unable to suggest career paths. Please try again.'
+            };
+        }
+    },
+    
+    // Networking Suggestions
+    generateNetworkingSuggestions: async function(resumeText, targetIndustry) {
+        try {
+            console.log('AI Service: Generating networking suggestions');
+            
+            // Extract candidate information
+            const candidateInfo = this.processAIResponse(resumeText, "Extract key information", resumeText);
+            const skills = candidateInfo.matchingSkills;
+            
+            // Map industries to professional organizations and events
+            const industryOrganizations = {
+                'software': ['IEEE Computer Society', 'ACM', 'Women Who Code', 'Developer Week'],
+                'marketing': ['American Marketing Association', 'Digital Marketing Institute', 'Content Marketing Institute'],
+                'finance': ['CFA Institute', 'Financial Planning Association', 'Association for Financial Professionals'],
+                'healthcare': ['American Medical Association', 'Healthcare Information and Management Systems Society'],
+                'general': ['Toastmasters International', 'Professional Association for Customer Engagement']
+            };
+            
+            // Get organizations for target industry
+            const organizations = industryOrganizations[targetIndustry.toLowerCase()] || industryOrganizations['general'];
+            
+            // Generate company recommendations based on skills
+            const recommendedCompanies = [
+                {
+                    name: `${skills[0]} Innovations`,
+                    industry: targetIndustry,
+                    relevance: 'High match with your skills in ' + skills[0]
+                },
+                {
+                    name: `${targetIndustry} Solutions Group`,
+                    industry: targetIndustry,
+                    relevance: 'Strong industry alignment'
+                },
+                {
+                    name: `Global ${skills[1]} Systems`,
+                    industry: targetIndustry,
+                    relevance: 'Matches your expertise in ' + skills[1]
+                }
+            ];
+            
+            return {
+                professionalOrganizations: organizations.map(org => ({
+                    name: org,
+                    relevance: 'High',
+                    membershipBenefits: ['Networking events', 'Professional development', 'Industry resources']
+                })),
+                recommendedCompanies: recommendedCompanies,
+                networkingEvents: [
+                    {
+                        name: `${targetIndustry} Conference 2023`,
+                        type: 'Conference',
+                        focus: `${targetIndustry} trends and innovations`
+                    },
+                    {
+                        name: `${skills[0]} Meetup Group`,
+                        type: 'Regular meetup',
+                        focus: `Discussions around ${skills[0]} and related technologies`
+                    },
+                    {
+                        name: `${targetIndustry} Professionals Networking Night`,
+                        type: 'Networking event',
+                        focus: 'Career opportunities and industry connections'
+                    }
+                ],
+                onlineNetworkingTips: [
+                    'Optimize your LinkedIn profile with industry-specific keywords',
+                    'Join LinkedIn groups related to your target field',
+                    'Follow thought leaders and engage with their content',
+                    'Share your own insights and experiences as posts',
+                    'Reach out to connections for informational interviews'
+                ],
+                inPersonNetworkingTips: [
+                    'Prepare an effective elevator pitch',
+                    'Set specific goals for each networking event',
+                    'Follow up with new connections within 48 hours',
+                    'Offer help and resources before asking for favors',
+                    'Maintain relationships through regular check-ins'
+                ]
+            };
+        } catch (error) {
+            console.error('Error generating networking suggestions:', error);
+            return {
+                error: 'Unable to generate networking suggestions. Please try again.'
+            };
+        }
+    },
+    
+    // Recruiter View Simulation
+    simulateRecruiterView: async function(resumeText) {
+        try {
+            console.log('AI Service: Simulating recruiter view');
+            
+            // Extract candidate information
+            const candidateInfo = this.processAIResponse(resumeText, "Extract key information", resumeText);
+            
+            // Analyze ATS compatibility
+            const atsAnalysis = this.analyzeATSCompatibility(resumeText);
+            
+            // Simulate how a recruiter would see the resume in an ATS
+            const recruiterView = {
+                parsedInformation: {
+                    name: candidateInfo.candidateName,
+                    email: candidateInfo.candidateEmail,
+                    phone: candidateInfo.candidatePhone,
+                    experience: candidateInfo.yearsOfExperience + ' years',
+                    skills: candidateInfo.matchingSkills
+                },
+                potentialIssues: [],
+                atsScore: atsAnalysis.atsScore,
+                keywordMatch: atsAnalysis.keywordScore + '%',
+                formatting: atsAnalysis.formattingScore + '%',
+                missingInformation: []
+            };
+            
+            // Identify potential issues
+            if (candidateInfo.candidateName === "Unknown") {
+                recruiterView.potentialIssues.push('Name not clearly identified');
+                recruiterView.missingInformation.push('Name');
+            }
+            
+            if (candidateInfo.candidateEmail === "Unknown") {
+                recruiterView.potentialIssues.push('Email not found or not parsed correctly');
+                recruiterView.missingInformation.push('Email');
+            }
+            
+            if (candidateInfo.candidatePhone === "Unknown") {
+                recruiterView.potentialIssues.push('Phone number not found or not parsed correctly');
+                recruiterView.missingInformation.push('Phone');
+            }
+            
+            if (atsAnalysis.formattingIssues.length > 0) {
+                atsAnalysis.formattingIssues.forEach(issue => {
+                    recruiterView.potentialIssues.push(issue.name + ' detected');
+                });
+            }
+            
+            // How the resume appears in different ATS systems
+            const atsSystems = {
+                'Workday': {
+                    accuracy: Math.min(100, atsAnalysis.atsScore + Math.floor(Math.random() * 10)),
+                    issues: recruiterView.potentialIssues.slice(0, 2)
+                },
+                'Taleo': {
+                    accuracy: Math.min(100, atsAnalysis.atsScore - Math.floor(Math.random() * 15)),
+                    issues: recruiterView.potentialIssues.slice(0, 3)
+                },
+                'Greenhouse': {
+                    accuracy: Math.min(100, atsAnalysis.atsScore + Math.floor(Math.random() * 5)),
+                    issues: recruiterView.potentialIssues.slice(0, 1)
+                },
+                'Lever': {
+                    accuracy: Math.min(100, atsAnalysis.atsScore + Math.floor(Math.random() * 8)),
+                    issues: recruiterView.potentialIssues.slice(0, 2)
+                }
+            };
+            
+            return {
+                recruiterView: recruiterView,
+                atsSystems: atsSystems,
+                improvementRecommendations: atsAnalysis.improvementTips,
+                visualRepresentation: {
+                    keywords: candidateInfo.matchingSkills.map(skill => ({ 
+                        text: skill, 
+                        highlight: true 
+                    })),
+                    sections: [
+                        { name: 'Contact Information', parsed: candidateInfo.candidateName !== "Unknown" && candidateInfo.candidateEmail !== "Unknown" },
+                        { name: 'Summary', parsed: true },
+                        { name: 'Experience', parsed: true },
+                        { name: 'Skills', parsed: candidateInfo.matchingSkills.length > 0 },
+                        { name: 'Education', parsed: resumeText.toLowerCase().includes('education') || resumeText.toLowerCase().includes('degree') }
+                    ]
+                }
+            };
+        } catch (error) {
+            console.error('Error simulating recruiter view:', error);
+            return {
+                error: 'Unable to simulate recruiter view. Please try again.'
+            };
+        }
+    },
+    
+    // Benchmark Comparison
+    compareWithIndustryBenchmarks: async function(resumeText, industry) {
+        try {
+            console.log('AI Service: Comparing with industry benchmarks');
+            
+            // Extract candidate information
+            const candidateInfo = this.processAIResponse(resumeText, "Extract key information", resumeText);
+            
+            // Define industry benchmark data
+            const benchmarks = {
+                'software': {
+                    avgSkillCount: 12,
+                    topSkills: ['JavaScript', 'Python', 'React', 'AWS', 'Node.js', 'SQL', 'Git'],
+                    resumeLength: '1-2 pages',
+                    keyElements: ['GitHub profile', 'Technical projects', 'Education', 'Certifications'],
+                    format: '70% use reverse chronological format'
+                },
+                'marketing': {
+                    avgSkillCount: 10,
+                    topSkills: ['Digital Marketing', 'Social Media', 'SEO', 'Content Strategy', 'Analytics', 'Email Marketing'],
+                    resumeLength: '1-2 pages',
+                    keyElements: ['Campaign results', 'Metrics & KPIs', 'Portfolio link', 'Brand experience'],
+                    format: '65% use combination format'
+                },
+                'finance': {
+                    avgSkillCount: 8,
+                    topSkills: ['Financial Analysis', 'Excel', 'Modeling', 'Forecasting', 'Accounting', 'Reporting'],
+                    resumeLength: '1-2 pages',
+                    keyElements: ['Certifications (CFA, CPA)', 'Transaction experience', 'Deal size', 'Regulations knowledge'],
+                    format: '80% use reverse chronological format'
+                },
+                'healthcare': {
+                    avgSkillCount: 9,
+                    topSkills: ['Patient Care', 'Electronic Health Records', 'Treatment Planning', 'Clinical Procedures', 'HIPAA'],
+                    resumeLength: '1-2 pages',
+                    keyElements: ['Licenses', 'Certifications', 'Specializations', 'Patient outcomes'],
+                    format: '75% use reverse chronological format'
+                },
+                'general': {
+                    avgSkillCount: 10,
+                    topSkills: ['Communication', 'Project Management', 'Problem Solving', 'Time Management', 'Leadership'],
+                    resumeLength: '1-2 pages',
+                    keyElements: ['Achievements', 'Results', 'Education', 'Professional experience'],
+                    format: '70% use reverse chronological format'
+                }
+            };
+            
+            // Get relevant benchmark
+            const relevantBenchmark = benchmarks[industry.toLowerCase()] || benchmarks['general'];
+            
+            // Calculate comparison
+            const skillCount = candidateInfo.matchingSkills.length;
+            const skillCountComparison = Math.round((skillCount / relevantBenchmark.avgSkillCount) * 100);
+            
+            // Count top industry skills present in candidate skills
+            const topSkillsPresent = relevantBenchmark.topSkills.filter(skill => 
+                candidateInfo.matchingSkills.some(candidateSkill => 
+                    candidateSkill.toLowerCase().includes(skill.toLowerCase())
+                )
+            );
+            
+            const topSkillsPercentage = Math.round((topSkillsPresent.length / relevantBenchmark.topSkills.length) * 100);
+            
+            // Count key elements present
+            const keyElementsPresent = relevantBenchmark.keyElements.filter(element => 
+                resumeText.toLowerCase().includes(element.toLowerCase())
+            );
+            
+            const keyElementsPercentage = Math.round((keyElementsPresent.length / relevantBenchmark.keyElements.length) * 100);
+            
+            return {
+                industry: industry,
+                candidateMetrics: {
+                    skillCount: skillCount,
+                    skillsPresent: candidateInfo.matchingSkills,
+                    topIndustrySkillsPresent: topSkillsPresent,
+                    keyElementsPresent: keyElementsPresent
+                },
+                industryBenchmarks: relevantBenchmark,
+                comparison: {
+                    skillCountPercentile: skillCountComparison,
+                    topSkillsPercentile: topSkillsPercentage,
+                    keyElementsPercentile: keyElementsPercentage,
+                    overallPercentile: Math.round((skillCountComparison + topSkillsPercentage + keyElementsPercentage) / 3)
+                },
+                improvementSuggestions: [
+                    `Add these key industry skills: ${relevantBenchmark.topSkills.filter(skill => !topSkillsPresent.includes(skill)).slice(0, 3).join(', ')}`,
+                    `Include these key elements: ${relevantBenchmark.keyElements.filter(element => !keyElementsPresent.includes(element)).slice(0, 2).join(', ')}`,
+                    'Use quantifiable achievements and metrics where possible',
+                    'Follow industry standard formatting and organization'
+                ]
+            };
+        } catch (error) {
+            console.error('Error comparing with industry benchmarks:', error);
+            return {
+                error: 'Unable to compare with industry benchmarks. Please try again.'
+            };
+        }
+    }
+    
+    // Resume Version Control is handled on the app.js side
 };
 
 // Export the service

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Editor | Resume Scanner</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Additional styles for the editor */
+        #resumeEditorContent {
+            min-height: 500px;
+            border: 1px solid #ced4da;
+            padding: 15px;
+            margin-top: 10px;
+            overflow-y: auto;
+        }
+        
+        .suggestion-card {
+            border-radius: 5px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            margin-bottom: 15px;
+        }
+        
+        .suggestion-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .resume-item {
+            margin-bottom: 20px;
+        }
+        
+        .resume-date {
+            font-style: italic;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        [contenteditable]:focus {
+            outline: 0px solid transparent;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="fas fa-file-search me-2"></i>Resume Scanner</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="editor.html">Resume Editor</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="coverletter.html">Cover Letter</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Career Tools
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="toolsDropdown">
+                            <li><a class="dropdown-item" href="interview.html">Interview Prep</a></li>
+                            <li><a class="dropdown-item" href="linkedin.html">LinkedIn Optimizer</a></li>
+                            <li><a class="dropdown-item" href="career-paths.html">Career Paths</a></li>
+                            <li><a class="dropdown-item" href="skill-gap.html">Skill Gap Analysis</a></li>
+                            <li><a class="dropdown-item" href="networking.html">Networking Suggestions</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="history.html">History</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="pricing.html">Pricing</a>
+                    </li>
+                    <li class="nav-item" id="adminNavItem" style="display: none;">
+                        <a class="nav-link" href="admin.html">Admin</a>
+                    </li>
+                </ul>
+                <div class="ms-2 d-flex align-items-center">
+                    <a href="login.html" class="btn btn-outline-light btn-sm" id="userLoginBtn">
+                        <i class="fas fa-user me-1"></i> <span id="loginBtnText">Login</span>
+                    </a>
+                    <span id="proStatusBadge" class="ms-2 badge bg-warning" style="display: none;">PRO</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Editor Header -->
+    <header class="bg-light py-3">
+        <div class="container">
+            <h1 class="mb-0">Interactive Resume Editor</h1>
+            <p class="lead">Create and optimize your resume with real-time AI feedback</p>
+        </div>
+    </header>
+
+    <!-- Editor Section -->
+    <section class="py-4">
+        <div class="container">
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="btn-group">
+                        <button id="newResumeBtn" class="btn btn-outline-primary">
+                            <i class="fas fa-plus me-1"></i> New Resume
+                        </button>
+                        <button id="loadResumeBtn" class="btn btn-outline-primary">
+                            <i class="fas fa-folder-open me-1"></i> Load Resume
+                        </button>
+                        <button id="downloadResumeBtn" class="btn btn-outline-primary">
+                            <i class="fas fa-download me-1"></i> Download
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-end">
+                        <select id="templateSelect" class="form-select w-auto">
+                            <option value="">Select Template...</option>
+                            <option value="chronological">Chronological</option>
+                            <option value="functional">Functional</option>
+                            <option value="combination">Combination</option>
+                            <option value="executive">Executive</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Editor Container -->
+            <div id="resumeEditorContainer"></div>
+        </div>
+    </section>
+    
+    <!-- Template Library Section -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <h2>Template Library</h2>
+            <p class="lead">Choose from our professional resume templates</p>
+            
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="card template-card">
+                        <img src="https://placehold.co/300x400/e9ecef/6c757d?text=Template+1" class="card-img-top" alt="Template 1">
+                        <div class="card-body">
+                            <h5 class="card-title">Chronological Template</h5>
+                            <p class="card-text">Perfect for candidates with a solid work history.</p>
+                            <button class="btn btn-primary btn-sm apply-template" data-template="chronological">Apply Template</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card template-card">
+                        <img src="https://placehold.co/300x400/e9ecef/6c757d?text=Template+2" class="card-img-top" alt="Template 2">
+                        <div class="card-body">
+                            <h5 class="card-title">Functional Template</h5>
+                            <p class="card-text">Ideal for highlighting skills over experience.</p>
+                            <button class="btn btn-primary btn-sm apply-template" data-template="functional">Apply Template</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card template-card">
+                        <img src="https://placehold.co/300x400/e9ecef/6c757d?text=Template+3" class="card-img-top" alt="Template 3">
+                        <div class="card-body">
+                            <h5 class="card-title">Combination Template</h5>
+                            <p class="card-text">Balances both skills and work experience.</p>
+                            <button class="btn btn-primary btn-sm apply-template" data-template="combination">Apply Template</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card template-card">
+                        <img src="https://placehold.co/300x400/e9ecef/6c757d?text=Template+4" class="card-img-top" alt="Template 4">
+                        <div class="card-body">
+                            <h5 class="card-title">Executive Template</h5>
+                            <p class="card-text">Designed for senior positions and leadership roles.</p>
+                            <button class="btn btn-primary btn-sm apply-template" data-template="executive">Apply Template</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-4">Powerful Resume Editing Features</h2>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon bg-primary text-white rounded-circle mb-3">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <h4>AI-Powered Analysis</h4>
+                            <p>Get real-time feedback on your resume with AI-powered content analysis and suggestions.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon bg-primary text-white rounded-circle mb-3">
+                                <i class="fas fa-search-plus"></i>
+                            </div>
+                            <h4>ATS Optimization</h4>
+                            <p>Compare your resume against job descriptions to optimize for Applicant Tracking Systems.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon bg-primary text-white rounded-circle mb-3">
+                                <i class="fas fa-file-export"></i>
+                            </div>
+                            <h4>Export Options</h4>
+                            <p>Download your resume in multiple formats suitable for different application methods.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-4 bg-dark text-white">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-file-search me-2"></i>Resume Scanner</h5>
+                    <p>Smart resume analysis powered by artificial intelligence.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="index.html" class="text-white">Home</a></li>
+                        <li><a href="editor.html" class="text-white">Resume Editor</a></li>
+                        <li><a href="coverletter.html" class="text-white">Cover Letter</a></li>
+                        <li><a href="history.html" class="text-white">History</a></li>
+                        <li><a href="pricing.html" class="text-white">Pricing</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Contact</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="mailto:support@resumescanner.com" class="text-white">support@resumescanner.com</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="mt-4">
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <p class="mb-0">&copy; 2023 Resume Scanner. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Resume Template Modal -->
+    <div class="modal fade" id="templateModal" tabindex="-1" aria-labelledby="templateModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="templateModalLabel">Select Resume Template</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-4" id="templateContainer">
+                        <!-- Templates will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap and Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/aiService.js"></script>
+    <script src="js/resumeEditor.js"></script>
+    <script>
+        // Initialize the editor when the DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the resume editor
+            ResumeEditor.init('resumeEditorContainer');
+            
+            // Set up template selection events
+            document.querySelectorAll('.apply-template').forEach(button => {
+                button.addEventListener('click', function() {
+                    const templateName = this.getAttribute('data-template');
+                    applyTemplate(templateName);
+                });
+            });
+            
+            document.getElementById('templateSelect').addEventListener('change', function() {
+                if (this.value) {
+                    applyTemplate(this.value);
+                }
+            });
+            
+            // Set up document buttons
+            document.getElementById('newResumeBtn').addEventListener('click', function() {
+                if (confirm('Create a new resume? Any unsaved changes will be lost.')) {
+                    ResumeEditor.loadContent('');
+                }
+            });
+            
+            document.getElementById('downloadResumeBtn').addEventListener('click', function() {
+                downloadResume();
+            });
+            
+            // Handle resume save events
+            document.addEventListener('resumeSave', function(event) {
+                const resume = event.detail.resume;
+                // In a real app, this would save to a database or localStorage
+                localStorage.setItem('lastSavedResume', JSON.stringify(resume));
+                console.log('Resume saved:', resume);
+            });
+        });
+        
+        // Apply a template to the editor
+        function applyTemplate(templateName) {
+            // In a real app, these would be much more detailed templates
+            const templates = {
+                'chronological': `
+                    <h1>Your Name</h1>
+                    <p>Email: your.email@example.com | Phone: (123) 456-7890 | City, State</p>
+                    
+                    <h2>Summary</h2>
+                    <p>Experienced professional with X years of expertise in your field. Skilled in [Key Skills] with a proven track record of [Notable Achievement].</p>
+                    
+                    <h2>Experience</h2>
+                    <div class="resume-item">
+                        <h3>Job Title</h3>
+                        <h4>Company Name</h4>
+                        <p class="resume-date">Month Year - Present</p>
+                        <ul>
+                            <li>Accomplishment that demonstrates value</li>
+                            <li>Accomplishment with quantifiable results</li>
+                            <li>Accomplishment showing skills or expertise</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="resume-item">
+                        <h3>Previous Job Title</h3>
+                        <h4>Previous Company Name</h4>
+                        <p class="resume-date">Month Year - Month Year</p>
+                        <ul>
+                            <li>Accomplishment from this role</li>
+                            <li>Accomplishment from this role</li>
+                            <li>Accomplishment from this role</li>
+                        </ul>
+                    </div>
+                    
+                    <h2>Education</h2>
+                    <div class="resume-item">
+                        <h3>Degree Name</h3>
+                        <h4>University Name</h4>
+                        <p class="resume-date">Graduation Year</p>
+                    </div>
+                    
+                    <h2>Skills</h2>
+                    <p>Skill 1, Skill 2, Skill 3, Skill 4, Skill 5, Skill 6</p>
+                `,
+                'functional': `
+                    <h1>Your Name</h1>
+                    <p>Email: your.email@example.com | Phone: (123) 456-7890 | City, State</p>
+                    
+                    <h2>Summary</h2>
+                    <p>Experienced professional specializing in [Key Specialty]. Proven ability to [Key Strength] and deliver [Key Result].</p>
+                    
+                    <h2>Skills & Expertise</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h3>Category 1</h3>
+                            <ul>
+                                <li>Skill with example of application</li>
+                                <li>Skill with example of application</li>
+                                <li>Skill with example of application</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h3>Category 2</h3>
+                            <ul>
+                                <li>Skill with example of application</li>
+                                <li>Skill with example of application</li>
+                                <li>Skill with example of application</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h3>Category 3</h3>
+                    <ul>
+                        <li>Skill with example of application</li>
+                        <li>Skill with example of application</li>
+                        <li>Skill with example of application</li>
+                    </ul>
+                    
+                    <h2>Work History</h2>
+                    <p>Job Title, Company Name, City, State | Month Year - Present</p>
+                    <p>Previous Job Title, Previous Company Name, City, State | Month Year - Month Year</p>
+                    <p>Earlier Job Title, Earlier Company Name, City, State | Month Year - Month Year</p>
+                    
+                    <h2>Education</h2>
+                    <p>Degree Name, University Name, Graduation Year</p>
+                `,
+                'combination': `
+                    <h1>Your Name</h1>
+                    <p>Email: your.email@example.com | Phone: (123) 456-7890 | City, State</p>
+                    
+                    <h2>Professional Summary</h2>
+                    <p>Accomplished professional with X years of experience in [Industry]. Expertise in [Key Skill 1], [Key Skill 2], and [Key Skill 3] with demonstrated success in [Key Achievement].</p>
+                    
+                    <h2>Core Competencies</h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <ul>
+                                <li>Core Skill 1</li>
+                                <li>Core Skill 2</li>
+                                <li>Core Skill 3</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <ul>
+                                <li>Core Skill 4</li>
+                                <li>Core Skill 5</li>
+                                <li>Core Skill 6</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <ul>
+                                <li>Core Skill 7</li>
+                                <li>Core Skill 8</li>
+                                <li>Core Skill 9</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h2>Professional Experience</h2>
+                    <div class="resume-item">
+                        <h3>Job Title</h3>
+                        <h4>Company Name</h4>
+                        <p class="resume-date">Month Year - Present</p>
+                        <p>Brief description of your role and responsibilities.</p>
+                        <ul>
+                            <li>Key accomplishment with measurable results</li>
+                            <li>Key accomplishment with measurable results</li>
+                            <li>Key accomplishment with measurable results</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="resume-item">
+                        <h3>Previous Job Title</h3>
+                        <h4>Previous Company Name</h4>
+                        <p class="resume-date">Month Year - Month Year</p>
+                        <p>Brief description of your role and responsibilities.</p>
+                        <ul>
+                            <li>Key accomplishment with measurable results</li>
+                            <li>Key accomplishment with measurable results</li>
+                        </ul>
+                    </div>
+                    
+                    <h2>Education</h2>
+                    <div class="resume-item">
+                        <h3>Degree Name</h3>
+                        <h4>University Name</h4>
+                        <p class="resume-date">Graduation Year</p>
+                    </div>
+                `,
+                'executive': `
+                    <h1>YOUR NAME</h1>
+                    <p class="text-center">City, State | (123) 456-7890 | your.email@example.com | LinkedIn: linkedin.com/in/yourname</p>
+                    <hr>
+                    
+                    <h2>EXECUTIVE SUMMARY</h2>
+                    <p>Visionary executive with proven ability to drive strategic growth and operational excellence. Expert in [Key Area] with track record of [Key Achievement]. Skilled in leading high-performing teams to achieve [Key Result].</p>
+                    
+                    <h2>AREAS OF EXPERTISE</h2>
+                    <div class="row">
+                        <div class="col-md-4">• Strategic Leadership</div>
+                        <div class="col-md-4">• P&L Management</div>
+                        <div class="col-md-4">• Team Development</div>
+                        <div class="col-md-4">• Market Expansion</div>
+                        <div class="col-md-4">• Revenue Growth</div>
+                        <div class="col-md-4">• Process Optimization</div>
+                    </div>
+                    
+                    <h2>PROFESSIONAL EXPERIENCE</h2>
+                    <div class="resume-item">
+                        <h3>COMPANY NAME, City, State</h3>
+                        <h4>Chief Executive Officer</h4>
+                        <p class="resume-date">Month Year - Present</p>
+                        <p>Strategic overview of your role and company.</p>
+                        <p><strong>Key Achievements:</strong></p>
+                        <ul>
+                            <li>Strategic achievement with financial impact</li>
+                            <li>Leadership achievement with organizational impact</li>
+                            <li>Business development achievement with growth metrics</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="resume-item">
+                        <h3>PREVIOUS COMPANY, City, State</h3>
+                        <h4>Chief Operating Officer</h4>
+                        <p class="resume-date">Month Year - Month Year</p>
+                        <p>Strategic overview of your role and company.</p>
+                        <p><strong>Key Achievements:</strong></p>
+                        <ul>
+                            <li>Operational achievement with financial impact</li>
+                            <li>Strategic achievement with growth metrics</li>
+                        </ul>
+                    </div>
+                    
+                    <h2>EDUCATION</h2>
+                    <p><strong>Master of Business Administration</strong> - University Name</p>
+                    <p><strong>Bachelor of Science, Field</strong> - University Name</p>
+                `
+            };
+            
+            // Apply the selected template
+            if (templates[templateName]) {
+                if (confirm('Apply this template? This will replace your current content.')) {
+                    ResumeEditor.loadContent(templates[templateName]);
+                }
+            }
+        }
+        
+        // Download the resume
+        function downloadResume() {
+            const content = ResumeEditor.currentResumeContent;
+            const blob = new Blob([content], {type: 'text/html'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'my_resume.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
