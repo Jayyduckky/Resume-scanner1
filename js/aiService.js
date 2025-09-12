@@ -1678,9 +1678,740 @@ const AIService = {
                 error: 'Unable to compare with industry benchmarks. Please try again.'
             };
         }
-    }
+    },
     
     // Resume Version Control is handled on the app.js side
+    
+    // Resume Keyword Optimization
+    optimizeResumeKeywords: async function(resumeText, jobDescription) {
+        try {
+            console.log('AI Service: Optimizing resume keywords');
+            
+            // Extract candidate information from resume
+            const resumeInfo = this.processAIResponse(resumeText, "Extract key information", resumeText);
+            
+            // Analyze job description to extract key requirements
+            const jobAnalysis = await this.analyzeJobDescription(jobDescription);
+            
+            // Extract current skills from resume
+            const currentSkills = resumeInfo.matchingSkills || [];
+            
+            // Extract important keywords from job description
+            const jobKeywords = jobAnalysis.topKeywords || [];
+            
+            // Find missing keywords (in job description but not in resume)
+            const missingKeywords = jobKeywords.filter(keyword => 
+                !currentSkills.some(skill => 
+                    skill.toLowerCase().includes(keyword.toLowerCase())
+                )
+            );
+            
+            // Find phrases in resume that could be optimized
+            const optimizationSuggestions = [];
+            
+            // Check if we have keywords to optimize for
+            if (missingKeywords.length > 0) {
+                // This would use NLP techniques to find potential areas for improvement
+                // For demo purposes, we'll create some example suggestions
+                
+                // Look for key sections in the resume to optimize
+                const sections = ['experience', 'skills', 'summary', 'projects'];
+                sections.forEach(section => {
+                    const sectionRegex = new RegExp(`\\b${section}\\b.*\\n([\\s\\S]*?)\\n\\n`, 'i');
+                    const match = resumeText.match(sectionRegex);
+                    
+                    if (match) {
+                        const sectionContent = match[1];
+                        
+                        // For each missing keyword, suggest optimizations
+                        missingKeywords.slice(0, 3).forEach(keyword => {
+                            // Find related terms that could be replaced
+                            const relatedTerms = this.findRelatedTerms(keyword, sectionContent);
+                            
+                            if (relatedTerms.length > 0) {
+                                relatedTerms.forEach(term => {
+                                    optimizationSuggestions.push({
+                                        section: section,
+                                        keyword: keyword,
+                                        originalText: term,
+                                        suggestedText: keyword,
+                                        context: this.extractContext(sectionContent, term, 100)
+                                    });
+                                });
+                            } else {
+                                // Suggest adding the keyword if no related terms found
+                                optimizationSuggestions.push({
+                                    section: section,
+                                    keyword: keyword,
+                                    originalText: '',
+                                    suggestedText: keyword,
+                                    context: 'Consider adding this keyword to your ' + section + ' section',
+                                    type: 'addition'
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // Calculate ATS match score before optimization
+            const atsScoreBefore = this.calculateKeywordMatchScore(currentSkills, jobKeywords);
+            
+            // Calculate potential ATS match score after optimization
+            const atsScoreAfter = this.calculateKeywordMatchScore(
+                [...currentSkills, ...missingKeywords.slice(0, 5)], 
+                jobKeywords
+            );
+            
+            // Generate example of optimized resume content
+            const optimizedResumeContent = this.createOptimizedResumeExample(resumeText, missingKeywords.slice(0, 3));
+            
+            return {
+                currentKeywords: currentSkills,
+                jobKeywords: jobKeywords,
+                missingKeywords: missingKeywords,
+                optimizationSuggestions: optimizationSuggestions,
+                atsScoreBefore: atsScoreBefore,
+                atsScoreAfter: atsScoreAfter,
+                optimizedResumeExample: optimizedResumeContent,
+                improvementTips: [
+                    'Use exact keywords from the job description when possible',
+                    'Incorporate keywords naturally into achievement statements',
+                    'Include both spelled-out terms and acronyms (e.g., "Artificial Intelligence (AI)")',
+                    'Prioritize keywords in the top third of your resume',
+                    'Add a skills section that explicitly lists key technical skills'
+                ]
+            };
+        } catch (error) {
+            console.error('Error optimizing resume keywords:', error);
+            return {
+                error: 'Unable to optimize resume keywords. Please try again.'
+            };
+        }
+    },
+    
+    // Find related terms that could be replaced with a keyword
+    findRelatedTerms: function(keyword, text) {
+        // This would use NLP techniques in a real implementation
+        // For demo purposes, we'll use a simple mapping of related terms
+        
+        const relatedTermsMap = {
+            'javascript': ['js', 'scripting', 'front-end development', 'web development'],
+            'python': ['programming', 'scripting', 'coding', 'development'],
+            'management': ['leadership', 'supervising', 'overseeing', 'directing'],
+            'data analysis': ['analytics', 'reporting', 'insights', 'metrics'],
+            'communication': ['interpersonal skills', 'verbal skills', 'written skills', 'presenting']
+        };
+        
+        // Check if we have predefined related terms
+        const lowercaseKeyword = keyword.toLowerCase();
+        const relatedTerms = relatedTermsMap[lowercaseKeyword] || [];
+        
+        // Find instances of related terms in the text
+        const foundTerms = [];
+        relatedTerms.forEach(term => {
+            if (text.toLowerCase().includes(term.toLowerCase())) {
+                foundTerms.push(term);
+            }
+        });
+        
+        return foundTerms;
+    },
+    
+    // Extract context around a term
+    extractContext: function(text, term, charCount) {
+        const index = text.toLowerCase().indexOf(term.toLowerCase());
+        if (index === -1) return '';
+        
+        const start = Math.max(0, index - charCount / 2);
+        const end = Math.min(text.length, index + term.length + charCount / 2);
+        
+        return '...' + text.substring(start, end) + '...';
+    },
+    
+    // Calculate keyword match score
+    calculateKeywordMatchScore: function(skills, jobKeywords) {
+        if (!jobKeywords || jobKeywords.length === 0) return 100;
+        
+        let matches = 0;
+        jobKeywords.forEach(keyword => {
+            if (skills.some(skill => skill.toLowerCase().includes(keyword.toLowerCase()))) {
+                matches++;
+            }
+        });
+        
+        return Math.round((matches / jobKeywords.length) * 100);
+    },
+    
+    // Create example of optimized resume
+    createOptimizedResumeExample: function(resumeText, keywordsToAdd) {
+        // In a real implementation, this would intelligently modify the resume text
+        // For demo purposes, we'll just highlight where keywords could be added
+        
+        // Find the skills section
+        const skillsSectionRegex = /\b(skills|technical skills|core competencies)\b.*\n([\\s\\S]*?)\\n\\n/i;
+        const match = resumeText.match(skillsSectionRegex);
+        
+        if (match && keywordsToAdd.length > 0) {
+            const skillsSection = match[0];
+            const updatedSkills = skillsSection + '\n• ' + keywordsToAdd.join('\n• ');
+            
+            // Return first 1000 chars with updated skills section
+            return resumeText.substring(0, 1000).replace(skillsSection, updatedSkills) + '...';
+        }
+        
+        // If no skills section found, add one
+        if (keywordsToAdd.length > 0) {
+            const newSkillsSection = '\nSKILLS\n' + keywordsToAdd.map(k => '• ' + k).join('\n');
+            
+            // Insert after the first paragraph
+            const firstParaEnd = resumeText.indexOf('\n\n');
+            if (firstParaEnd !== -1) {
+                return resumeText.substring(0, firstParaEnd + 2) + newSkillsSection + resumeText.substring(firstParaEnd + 2, 1000) + '...';
+            }
+        }
+        
+        return resumeText.substring(0, 1000) + '...';
+    },
+    
+    // Company Culture Matcher
+    matchCompanyCulture: async function(resumeText, companyName) {
+        try {
+            console.log('AI Service: Analyzing company culture match');
+            
+            // Extract candidate information from resume
+            const resumeInfo = this.processAIResponse(resumeText, "Extract key information", resumeText);
+            
+            // Get company culture data
+            // In a real implementation, this would query a database or API
+            const companyData = this.getCompanyCultureData(companyName);
+            
+            // If company not found, use generic company culture values
+            const cultureValues = companyData ? companyData.values : 
+                ['innovation', 'teamwork', 'integrity', 'customer focus', 'excellence'];
+            
+            // Extract language patterns from resume that indicate cultural fit
+            const culturalIndicators = this.extractCulturalIndicators(resumeText);
+            
+            // Match candidate indicators against company values
+            const cultureMatches = [];
+            const cultureGaps = [];
+            
+            cultureValues.forEach(value => {
+                const matchingIndicators = culturalIndicators.filter(indicator => 
+                    indicator.themes.some(theme => theme.toLowerCase() === value.toLowerCase())
+                );
+                
+                if (matchingIndicators.length > 0) {
+                    cultureMatches.push({
+                        companyValue: value,
+                        candidateIndicators: matchingIndicators.map(i => i.text)
+                    });
+                } else {
+                    cultureGaps.push(value);
+                }
+            });
+            
+            // Calculate overall match score
+            const matchScore = Math.round((cultureMatches.length / cultureValues.length) * 100);
+            
+            // Generate suggestions to improve cultural fit
+            const suggestions = this.generateCultureFitSuggestions(cultureGaps, culturalIndicators);
+            
+            return {
+                companyName: companyName,
+                companyValues: cultureValues,
+                cultureMatches: cultureMatches,
+                cultureGaps: cultureGaps,
+                culturalIndicators: culturalIndicators,
+                matchScore: matchScore,
+                suggestions: suggestions,
+                companyProfile: companyData ? companyData.profile : null
+            };
+        } catch (error) {
+            console.error('Error analyzing company culture match:', error);
+            return {
+                error: 'Unable to analyze company culture match. Please try again.'
+            };
+        }
+    },
+    
+    // Get company culture data
+    getCompanyCultureData: function(companyName) {
+        // In a real implementation, this would query a database or API
+        // For demo purposes, we'll use a small set of example companies
+        
+        const companies = {
+            'google': {
+                name: 'Google',
+                values: ['innovation', 'technical excellence', 'user focus', 'data-driven', 'diversity'],
+                profile: 'Google is known for its innovative culture focused on technical excellence and solving big problems. The company values data-driven decision making, user-centered design, and encourages employees to spend time on creative projects.'
+            },
+            'microsoft': {
+                name: 'Microsoft',
+                values: ['growth mindset', 'customer obsession', 'diversity and inclusion', 'innovation', 'making a difference'],
+                profile: 'Microsoft promotes a growth mindset culture where learning and development are prioritized. The company focuses on customer-centric innovation and making a positive impact through technology.'
+            },
+            'amazon': {
+                name: 'Amazon',
+                values: ['customer obsession', 'ownership', 'high standards', 'innovation', 'frugality'],
+                profile: "Amazon's culture centers on customer obsession and setting high standards. The company values ownership mentality, innovative thinking, and operational excellence."
+            },
+            'apple': {
+                name: 'Apple',
+                values: ['design excellence', 'innovation', 'secrecy', 'quality', 'simplicity'],
+                profile: 'Apple emphasizes design excellence and product quality. The culture values innovation, attention to detail, and creating intuitive user experiences.'
+            }
+        };
+        
+        // Normalize company name for lookup
+        const normalizedName = companyName.toLowerCase().trim();
+        
+        // Return company data if found
+        return companies[normalizedName] || null;
+    },
+    
+    // Extract cultural indicators from resume
+    extractCulturalIndicators: function(resumeText) {
+        // This would use NLP techniques in a real implementation
+        // For demo purposes, we'll use regex patterns to find cultural indicators
+        
+        const indicators = [];
+        
+        // Define patterns that indicate cultural values
+        const patterns = [
+            {
+                regex: /\b(collaborate|collaborat(ed|ion|ive)|team|teamwork|cross-functional)\b/gi,
+                themes: ['teamwork', 'collaboration']
+            },
+            {
+                regex: /\b(innovat(ed|ion|ive)|creat(ed|ive|ivity)|pioneer(ed)?|groundbreaking)\b/gi,
+                themes: ['innovation', 'creativity']
+            },
+            {
+                regex: /\b(lead(er|ership)?|manag(ed|ing|ement)|direct(ed|ing)|oversee(ing)?|supervis(ed|ing|ion))\b/gi,
+                themes: ['leadership']
+            },
+            {
+                regex: /\b(customer|client|user|patient)-?(facing|centric|focus(ed)?|service|satisfaction|experience)\b/gi,
+                themes: ['customer focus', 'user focus']
+            },
+            {
+                regex: /\b(achiev(ed|ing|ement)|exceed(ed|ing)?|surpass(ed|ing)?|outperform(ed|ing)?|goal)\b/gi,
+                themes: ['excellence', 'achievement']
+            },
+            {
+                regex: /\b(ethic(s|al)?|integr(ity|ous)|honest(y|ly)|responsib(le|ility)|accountab(le|ility))\b/gi,
+                themes: ['integrity', 'ethics']
+            },
+            {
+                regex: /\b(divers(e|ity)|inclusi(on|ve)|equit(y|able)|multicultural|belonging)\b/gi,
+                themes: ['diversity and inclusion']
+            }
+        ];
+        
+        // Find matches for each pattern
+        patterns.forEach(pattern => {
+            let match;
+            while ((match = pattern.regex.exec(resumeText)) !== null) {
+                // Extract context around the match
+                const start = Math.max(0, match.index - 50);
+                const end = Math.min(resumeText.length, match.index + match[0].length + 50);
+                const context = resumeText.substring(start, end);
+                
+                indicators.push({
+                    text: context,
+                    keyword: match[0],
+                    themes: pattern.themes
+                });
+            }
+        });
+        
+        return indicators;
+    },
+    
+    // Generate suggestions to improve cultural fit
+    generateCultureFitSuggestions: function(cultureGaps, culturalIndicators) {
+        const suggestions = [];
+        
+        // For each gap, create a suggestion
+        cultureGaps.forEach(gap => {
+            let suggestion = {
+                companyValue: gap,
+                actionItems: []
+            };
+            
+            switch (gap.toLowerCase()) {
+                case 'innovation':
+                    suggestion.actionItems = [
+                        'Highlight creative solutions you\'ve implemented',
+                        'Mention any patents, new processes, or unique approaches you\'ve developed',
+                        'Include examples of thinking outside the box'
+                    ];
+                    break;
+                    
+                case 'teamwork':
+                case 'collaboration':
+                    suggestion.actionItems = [
+                        'Emphasize cross-functional team experiences',
+                        'Quantify results achieved through collaboration',
+                        'Use phrases like "worked closely with" or "partnered with"'
+                    ];
+                    break;
+                    
+                case 'customer focus':
+                case 'user focus':
+                    suggestion.actionItems = [
+                        'Include metrics related to customer satisfaction or user experience',
+                        'Describe how your work directly improved customer outcomes',
+                        'Mention any customer-facing roles or responsibilities'
+                    ];
+                    break;
+                    
+                case 'excellence':
+                case 'high standards':
+                    suggestion.actionItems = [
+                        'Quantify achievements that exceeded expectations or targets',
+                        'Mention awards, recognitions, or performance metrics',
+                        'Include examples of process improvements or quality initiatives'
+                    ];
+                    break;
+                    
+                default:
+                    suggestion.actionItems = [
+                        `Incorporate examples demonstrating your alignment with ${gap}`,
+                        `Research how ${gap} is expressed at the company and reflect similar values`,
+                        `Consider adding specific achievements that showcase ${gap}`
+                    ];
+            }
+            
+            suggestions.push(suggestion);
+        });
+        
+        return suggestions;
+    },
+    
+    // Networking Recommendations Engine
+    generateNetworkingRecommendations: async function(resumeText, targetIndustry, targetLocation = null) {
+        try {
+            console.log('AI Service: Generating networking recommendations');
+            
+            // Extract candidate information from resume
+            const resumeInfo = this.processAIResponse(resumeText, "Extract key information", resumeText);
+            
+            // Get skills and experience level
+            const skills = resumeInfo.matchingSkills || [];
+            const yearsOfExperience = resumeInfo.yearsOfExperience || 0;
+            
+            // Determine career stage
+            let careerStage = 'early';
+            if (yearsOfExperience > 10) {
+                careerStage = 'senior';
+            } else if (yearsOfExperience > 5) {
+                careerStage = 'mid';
+            }
+            
+            // Get professional organizations based on industry and skills
+            const professionalOrganizations = this.getProfessionalOrganizations(targetIndustry, skills);
+            
+            // Get networking events
+            const networkingEvents = this.getNetworkingEvents(targetIndustry, targetLocation);
+            
+            // Get online communities
+            const onlineCommunities = this.getOnlineCommunities(skills, targetIndustry);
+            
+            // Get LinkedIn groups
+            const linkedinGroups = this.getLinkedInGroups(skills, targetIndustry);
+            
+            // Get industry influencers to follow
+            const industryInfluencers = this.getIndustryInfluencers(targetIndustry);
+            
+            // Generate networking strategies based on career stage
+            const networkingStrategies = this.generateNetworkingStrategies(careerStage, targetIndustry);
+            
+            // Create personalized conversation starters
+            const conversationStarters = this.createConversationStarters(skills, resumeInfo, targetIndustry);
+            
+            return {
+                professionalOrganizations: professionalOrganizations,
+                networkingEvents: networkingEvents,
+                onlineCommunities: onlineCommunities,
+                linkedinGroups: linkedinGroups,
+                industryInfluencers: industryInfluencers,
+                networkingStrategies: networkingStrategies,
+                conversationStarters: conversationStarters,
+                careerStage: careerStage,
+                targetIndustry: targetIndustry,
+                targetLocation: targetLocation
+            };
+        } catch (error) {
+            console.error('Error generating networking recommendations:', error);
+            return {
+                error: 'Unable to generate networking recommendations. Please try again.'
+            };
+        }
+    },
+    
+    // Get professional organizations based on industry and skills
+    getProfessionalOrganizations: function(industry, skills) {
+        // In a real implementation, this would query a database or API
+        // For demo purposes, we'll use a mapping of industries to organizations
+        
+        const organizationsByIndustry = {
+            'software': [
+                { name: 'IEEE Computer Society', url: 'https://www.computer.org/', focus: 'Computer Science & Engineering' },
+                { name: 'ACM', url: 'https://www.acm.org/', focus: 'Computing Professionals' },
+                { name: 'Women Who Code', url: 'https://www.womenwhocode.com/', focus: 'Women in Technology' }
+            ],
+            'marketing': [
+                { name: 'American Marketing Association', url: 'https://www.ama.org/', focus: 'Marketing Professionals' },
+                { name: 'Digital Marketing Institute', url: 'https://digitalmarketinginstitute.com/', focus: 'Digital Marketing' },
+                { name: 'Content Marketing Institute', url: 'https://contentmarketinginstitute.com/', focus: 'Content Marketing' }
+            ],
+            'finance': [
+                { name: 'CFA Institute', url: 'https://www.cfainstitute.org/', focus: 'Investment Professionals' },
+                { name: 'Financial Planning Association', url: 'https://www.financialplanningassociation.org/', focus: 'Financial Planners' },
+                { name: 'Association for Financial Professionals', url: 'https://www.afponline.org/', focus: 'Treasury & Finance' }
+            ],
+            'healthcare': [
+                { name: 'American Medical Association', url: 'https://www.ama-assn.org/', focus: 'Physicians' },
+                { name: 'Healthcare Information and Management Systems Society', url: 'https://www.himss.org/', focus: 'Health Information Technology' },
+                { name: 'American Nurses Association', url: 'https://www.nursingworld.org/', focus: 'Nursing Professionals' }
+            ],
+            'design': [
+                { name: 'AIGA', url: 'https://www.aiga.org/', focus: 'Design Professionals' },
+                { name: 'Interaction Design Association', url: 'https://ixda.org/', focus: 'Interaction Design' },
+                { name: 'Industrial Designers Society of America', url: 'https://www.idsa.org/', focus: 'Industrial Design' }
+            ]
+        };
+        
+        // Get organizations for the specified industry
+        const industryOrgs = organizationsByIndustry[industry.toLowerCase()] || [];
+        
+        // Add organizations based on skills
+        const skillOrgs = [];
+        const skillToOrg = {
+            'javascript': { name: 'JavaScript Developer Association', url: '#', focus: 'JavaScript Development' },
+            'python': { name: 'Python Software Foundation', url: 'https://www.python.org/psf/', focus: 'Python Development' },
+            'data analysis': { name: 'Data Science Association', url: '#', focus: 'Data Science & Analytics' },
+            'design': { name: 'Interaction Design Foundation', url: 'https://www.interaction-design.org/', focus: 'UX/UI Design' }
+        };
+        
+        skills.forEach(skill => {
+            const lowercaseSkill = skill.toLowerCase();
+            if (skillToOrg[lowercaseSkill]) {
+                skillOrgs.push(skillToOrg[lowercaseSkill]);
+            }
+        });
+        
+        // Combine and de-duplicate organizations
+        const allOrgs = [...industryOrgs, ...skillOrgs];
+        const uniqueOrgs = [];
+        const seenNames = new Set();
+        
+        allOrgs.forEach(org => {
+            if (!seenNames.has(org.name)) {
+                seenNames.add(org.name);
+                uniqueOrgs.push(org);
+            }
+        });
+        
+        return uniqueOrgs;
+    },
+    
+    // Get networking events based on industry and location
+    getNetworkingEvents: function(industry, location) {
+        // In a real implementation, this would query a database or API
+        // For demo purposes, we'll return some example events
+        
+        const baseEvents = [
+            {
+                name: `${industry} Conference 2023`,
+                type: 'Conference',
+                focus: `${industry} trends and innovations`,
+                virtual: false
+            },
+            {
+                name: `Virtual ${industry} Summit`,
+                type: 'Summit',
+                focus: 'Industry best practices',
+                virtual: true
+            },
+            {
+                name: `${industry} Professionals Networking Night`,
+                type: 'Networking Event',
+                focus: 'Career opportunities and connections',
+                virtual: false
+            }
+        ];
+        
+        // Add location-specific information if provided
+        if (location) {
+            return baseEvents.map(event => ({
+                ...event,
+                location: event.virtual ? 'Virtual' : location
+            }));
+        }
+        
+        return baseEvents;
+    },
+    
+    // Get online communities based on skills and industry
+    getOnlineCommunities: function(skills, industry) {
+        // Example online communities based on common industries and skills
+        const communities = [
+            {
+                name: `Reddit r/${industry}`,
+                platform: 'Reddit',
+                url: `https://www.reddit.com/r/${industry.toLowerCase()}`,
+                focus: `${industry} discussions and news`
+            },
+            {
+                name: `${industry} Professionals`,
+                platform: 'Facebook Group',
+                url: '#',
+                focus: 'Professional networking and discussions'
+            },
+            {
+                name: `${industry} Community`,
+                platform: 'Slack',
+                url: '#',
+                focus: 'Real-time discussions and job postings'
+            }
+        ];
+        
+        // Add skill-specific communities
+        skills.slice(0, 2).forEach(skill => {
+            communities.push({
+                name: `${skill} Developers`,
+                platform: 'Discord',
+                url: '#',
+                focus: `${skill} development discussions and help`
+            });
+        });
+        
+        return communities;
+    },
+    
+    // Get LinkedIn groups based on skills and industry
+    getLinkedInGroups: function(skills, industry) {
+        // Example LinkedIn groups based on common industries and skills
+        const groups = [
+            {
+                name: `${industry} Professionals Network`,
+                members: this.generateRandomNumber(5000, 100000),
+                focus: `Professionals in the ${industry} industry`,
+                activity: 'Very Active'
+            },
+            {
+                name: `${industry} Leaders`,
+                members: this.generateRandomNumber(1000, 50000),
+                focus: `Leadership in ${industry}`,
+                activity: 'Active'
+            },
+            {
+                name: `Women in ${industry}`,
+                members: this.generateRandomNumber(2000, 30000),
+                focus: `Supporting women in the ${industry} field`,
+                activity: 'Active'
+            }
+        ];
+        
+        // Add skill-specific groups
+        skills.slice(0, 2).forEach(skill => {
+            groups.push({
+                name: `${skill} Professionals`,
+                members: this.generateRandomNumber(3000, 80000),
+                focus: `${skill} specialists and enthusiasts`,
+                activity: 'Very Active'
+            });
+        });
+        
+        return groups;
+    },
+    
+    // Generate a random number between min and max
+    generateRandomNumber: function(min, max) {
+        return Math.floor(Math.random() * (max - min + 1) + min);
+    },
+    
+    // Get industry influencers to follow
+    getIndustryInfluencers: function(industry) {
+        // Example influencers based on industry
+        const influencersByIndustry = {
+            'software': [
+                { name: 'Jeff Atwood', platform: 'Twitter', handle: '@codinghorror', focus: 'Software Development' },
+                { name: 'Kent C. Dodds', platform: 'Twitter', handle: '@kentcdodds', focus: 'JavaScript & React' },
+                { name: 'Dave Farley', platform: 'YouTube', handle: 'Continuous Delivery', focus: 'DevOps & CI/CD' }
+            ],
+            'marketing': [
+                { name: 'Neil Patel', platform: 'Twitter', handle: '@neilpatel', focus: 'Digital Marketing' },
+                { name: 'Ann Handley', platform: 'Twitter', handle: '@annhandley', focus: 'Content Marketing' },
+                { name: 'Rand Fishkin', platform: 'Twitter', handle: '@randfish', focus: 'SEO' }
+            ],
+            'finance': [
+                { name: 'Warren Buffett', platform: 'General', handle: 'Berkshire Hathaway', focus: 'Investing' },
+                { name: 'Dave Ramsey', platform: 'Twitter', handle: '@DaveRamsey', focus: 'Personal Finance' },
+                { name: 'Cathie Wood', platform: 'Twitter', handle: '@CathieDWood', focus: 'Innovation Investing' }
+            ],
+            'healthcare': [
+                { name: 'Eric Topol', platform: 'Twitter', handle: '@EricTopol', focus: 'Medical Innovation' },
+                { name: 'Berci Meskó', platform: 'Twitter', handle: '@Berci', focus: 'Digital Health' },
+                { name: 'Kevin Pho', platform: 'Twitter', handle: '@kevinmd', focus: 'Physician Perspective' }
+            ]
+        };
+        
+        // Get influencers for the specified industry or return generic ones
+        return influencersByIndustry[industry.toLowerCase()] || [
+            { name: 'Industry Expert 1', platform: 'LinkedIn', handle: 'expert1', focus: `${industry} Strategy` },
+            { name: 'Industry Expert 2', platform: 'Twitter', handle: '@expert2', focus: `${industry} Innovation` },
+            { name: 'Industry Expert 3', platform: 'YouTube', handle: 'Expert Channel', focus: `${industry} Tutorials` }
+        ];
+    },
+    
+    // Generate networking strategies based on career stage
+    generateNetworkingStrategies: function(careerStage, industry) {
+        // Strategies customized by career stage
+        const strategies = {
+            'early': [
+                'Attend industry meetups to meet potential mentors',
+                'Join online communities to build skills and make connections',
+                'Volunteer for industry events to expand your network',
+                'Connect with alumni from your school who are in the industry',
+                'Ask for informational interviews with professionals you admire'
+            ],
+            'mid': [
+                'Focus on deepening existing professional relationships',
+                'Join committees in professional organizations',
+                'Speak at industry events or webinars',
+                'Mentor early career professionals',
+                'Build relationships with peers at competitor companies'
+            ],
+            'senior': [
+                'Focus on thought leadership through speaking and writing',
+                'Serve on boards or advisory committees',
+                'Host networking events or roundtable discussions',
+                'Connect with venture capital or investor networks',
+                'Establish yourself as an industry expert through content creation'
+            ]
+        };
+        
+        return strategies[careerStage] || strategies['mid'];
+    },
+    
+    // Create personalized conversation starters
+    createConversationStarters: function(skills, resumeInfo, industry) {
+        // Generate conversation starters based on skills and experience
+        const starters = [
+            `"I see you work in ${industry}. I've been focusing on ${skills.slice(0, 2).join(' and ')} recently. What trends are you seeing in these areas?"`,
+            `"I'm interested in learning more about ${industry}. My background is in ${skills[0]}. How did you get started in this field?"`,
+            `"I noticed you have experience with [their company/technology]. I've been working with ${skills[0]} for ${resumeInfo.yearsOfExperience} years. Have you found any interesting ways to combine these technologies?"`,
+            `"What's the most challenging problem you're working on right now in ${industry}?"`,
+            `"I'm attending this event to learn more about ${skills[1] || industry}. What brought you here today?"`
+        ];
+        
+        return starters;
+    }
 };
 
 // Export the service
